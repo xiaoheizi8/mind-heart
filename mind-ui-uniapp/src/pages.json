@@ -1,0 +1,169 @@
+{
+	"pages": [
+		{
+			"path": "pages/launch/launch",
+			"style": {
+				"navigationBarTitleText": "",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/guide/guide",
+			"style": {
+				"navigationBarTitleText": "",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/index/index",
+			"style": {
+				"navigationBarTitleText": "心域",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/login/login",
+			"style": {
+				"navigationBarTitleText": "登录",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/register/register",
+			"style": {
+				"navigationBarTitleText": "注册",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/diary/list",
+			"style": {
+				"navigationBarTitleText": "情绪日记",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/diary/create",
+			"style": {
+				"navigationBarTitleText": "写日记"
+			}
+		},
+		{
+			"path": "pages/diary/detail",
+			"style": {
+				"navigationBarTitleText": "日记详情"
+			}
+		},
+		{
+			"path": "pages/diary/edit",
+			"style": {
+				"navigationBarTitleText": "编辑日记"
+			}
+		},
+		{
+			"path": "pages/chat/chat",
+			"style": {
+				"navigationBarTitleText": "AI陪伴"
+			}
+		},
+		{
+			"path": "pages/emotion/report",
+			"style": {
+				"navigationBarTitleText": "情绪报告"
+			}
+		},
+		{
+			"path": "pages/knowledge/list",
+			"style": {
+				"navigationBarTitleText": "心理知识"
+			}
+		},
+		{
+			"path": "pages/knowledge/detail",
+			"style": {
+				"navigationBarTitleText": "知识详情"
+			}
+		},
+		{
+			"path": "pages/profile/index",
+			"style": {
+				"navigationBarTitleText": "我的"
+			}
+		},
+		{
+			"path": "pages/profile/edit",
+			"style": {
+				"navigationBarTitleText": "编辑资料"
+			}
+		},
+		{
+			"path": "pages/settings/notification",
+			"style": {
+				"navigationBarTitleText": "通知设置"
+			}
+		},
+		{
+			"path": "pages/settings/privacy",
+			"style": {
+				"navigationBarTitleText": "隐私设置"
+			}
+		},
+		{
+			"path": "pages/settings/about",
+			"style": {
+				"navigationBarTitleText": "关于心域"
+			}
+		},
+		{
+			"path": "pages/knowledge/favorites",
+			"style": {
+				"navigationBarTitleText": "我的收藏"
+			}
+		},
+		{
+			"path": "pages/notification/list",
+			"style": {
+				"navigationBarTitleText": "通知中心"
+			}
+		}
+	],
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "心域",
+		"navigationBarBackgroundColor": "#F8F8F8",
+		"backgroundColor": "#F8F8F8"
+	},
+	"tabBar": {
+		"color": "#999999",
+		"selectedColor": "#7B68EE",
+		"borderStyle": "black",
+		"backgroundColor": "#FFFFFF",
+		"list": [
+			{
+				"pagePath": "pages/index/index",
+				"text": "首页",
+				"iconPath": "static/icons/home.svg",
+				"selectedIconPath": "static/icons/home-active.svg"
+			},
+			{
+				"pagePath": "pages/diary/list",
+				"text": "日记",
+				"iconPath": "static/icons/diary.svg",
+				"selectedIconPath": "static/icons/diary-active.svg"
+			},
+			{
+				"pagePath": "pages/chat/chat",
+				"text": "陪伴",
+				"iconPath": "static/icons/chat.svg",
+				"selectedIconPath": "static/icons/chat-active.svg"
+			},
+			{
+				"pagePath": "pages/profile/index",
+				"text": "我的",
+				"iconPath": "static/icons/profile.svg",
+				"selectedIconPath": "static/icons/profile-active.svg"
+			}
+		]
+	},
+	"uniIdRouter": {}
+}

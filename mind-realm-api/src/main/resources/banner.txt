@@ -1,0 +1,11 @@
+${AnsiColor.BRIGHT_CYAN}
+ _   _      _ _         __        ___           _
+| \ | | ___| | | ___    \ \      / (_)_ __ ___ | |_ ___
+|  \| |/ _ \ | |/ _ \    \ \ /\ / /| | '__/ _ \| __/ __|
+| |\  |  __/ | | (_) |    \ V  V / | | | | (_) | |_\__ \
+|_| \_|\___|_|_|\___/      \_/\_/  |_|_|  \___/ \__|___/
+
+${AnsiColor.BRIGHT_MAGENTA}
+:: Mind Realm Framework :: ${AnsiColor.BRIGHT_YELLOW}${application.version:1.0.0}${AnsiColor.BRIGHT_MAGENTA} ::
+${AnsiColor.BRIGHT_GREEN}Spring Boot${spring-boot.formatted-version}  ${AnsiColor.BRIGHT_BLUE}Java ${java.version}
+${AnsiColor.DEFAULT}

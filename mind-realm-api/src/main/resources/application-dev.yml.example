@@ -1,0 +1,148 @@
+server:
+  port: 8080
+
+spring:
+  mail:
+    protocol: smtp
+    host: smtp.163.com
+    port: 465
+    username: your-email@163.com
+    password: your-email-password
+    nickname: your-nickname
+    default-encoding: utf-8
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true
+          socketFactory:
+            port: 465
+            class: javax.net.ssl.SSLSocketFactory
+        debug: false
+  application:
+    name: mind-realm
+  ai:
+    dashscope:
+      api-key: your-dashscope-api-key
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/mind_realm?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false
+    username: root
+    password: your-database-password
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+      timeout: 5000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-wait: -1ms
+          max-idle: 8
+          min-idle: 0
+    elasticsearch:
+      repositories:
+        enabled: true
+
+  elasticsearch:
+    uris: http://localhost:9200
+    username: your-es-username
+    password: your-es-password
+  mybatis-plus:
+    mapper-locations: classpath*:/mapper/**/*.xml
+    type-aliases-package: com.mindrealm.**.entity
+    configuration:
+      map-underscore-to-camel-case: true
+      log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    global-config:
+      db-config:
+        id-type: auto
+        logic-delete-field: deleted
+        logic-delete-value: 1
+        logic-not-delete-value: 0
+
+notification:
+  sms:
+    enabled: false
+    provider: aliyun
+    dry-run: true
+    aliyun:
+      access-key-id: your-aliyun-access-key-id
+      access-key-secret: your-aliyun-access-key-secret
+      sign-name: 心域
+      template-code:
+        warning: SMS_WARNING
+        verify-code: SMS_VERIFY
+  email:
+    enabled: false
+  emergency:
+    hotline: 400-161-9995
+
+logging:
+  level:
+    com.mindrealm: debug
+    org.springframework: info
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+aliyun:
+  oss:
+    end-point: oss-cn-beijing.aliyuncs.com
+    access-key-id: your-oss-access-key-id
+    access-key-secret: your-oss-access-key-secret
+    bucket-name: your-bucket-name
+
+jwt:
+  secret: your-jwt-secret-key-change-in-production
+  expiration: 86400
+
+ai:
+  provider: deepseek
+  deepseek:
+    api-key: your-deepseek-api-key
+    base-url: https://api.deepseek.com
+    model: deepseek-chat
+  openai:
+    api-key: ${OPENAI_API_KEY:}
+    model: gpt-3.5-turbo
+    base-url: https://api.openai.com
+
+spring-ai-alibaba:
+  dashscope:
+    api-key: your-dashscope-api-key
+    chat:
+      options:
+        model: qwen-plus
+        temperature: 0.7
+        max-tokens: 2048
+    embedding:
+      options:
+        model: text-embedding-v3
+
+mind-realm:
+  rag:
+    mode: BAILIAN_KNOWLEDGE
+    bailian:
+      enabled: true
+      api-key: your-bailian-api-key
+      model: qwen-plus
+      knowledge-base-id: mind_realm_knowledge
+      use-knowledge-base: true
+      temperature: 0.9
+      max-tokens: 4000
+    local-memory:
+      enabled: true
+    milvus:
+      enabled: false
+      host: localhost
+      port: 19530

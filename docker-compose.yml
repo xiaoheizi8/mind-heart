@@ -1,0 +1,151 @@
+version: '3.8'
+
+services:
+  # 后端API服务
+  mind-realm-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mind-realm-api
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/mind_realm
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=your_password
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+      - MILVUS_HOST=milvus
+      - MILVUS_PORT=19530
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      milvus:
+        condition: service_started
+    networks:
+      - mind-realm-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+
+  # MySQL数据库
+  mysql:
+    image: mysql:8.0
+    container_name: mind-realm-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root_password
+      - MYSQL_DATABASE=mind_realm
+      - MYSQL_USER=mindrealm
+      - MYSQL_PASSWORD=your_password
+      - TZ=Asia/Shanghai
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./mind-realm-database/sql:/docker-entrypoint-initdb.d
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    networks:
+      - mind-realm-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis缓存
+  redis:
+    image: redis:7-alpine
+    container_name: mind-realm-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - mind-realm-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Milvus向量数据库
+  milvus:
+    image: milvusdb/milvus:v2.3.3
+    container_name: mind-realm-milvus
+    ports:
+      - "19530:19530"
+    environment:
+      - ETCD_USE_EMBED=true
+      - COMMON_STORAGETYPE=local
+    volumes:
+      - milvus-data:/var/lib/milvus
+    networks:
+      - mind-realm-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+
+  # Python向量服务
+  vector-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.py
+    container_name: mind-realm-vector
+    ports:
+      - "8000:8000"
+    environment:
+      - MILVUS_HOST=milvus
+      - MILVUS_PORT=19530
+      - PORT=8000
+    volumes:
+      - ./py/templates:/app/py/templates:ro
+    depends_on:
+      milvus:
+        condition: service_healthy
+    networks:
+      - mind-realm-network
+    restart: unless-stopped
+
+  # Nginx反向代理
+  nginx:
+    image: nginx:alpine
+    container_name: mind-realm-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./dist:/usr/share/nginx/html:ro
+    depends_on:
+      - mind-realm-api
+    networks:
+      - mind-realm-network
+    restart: unless-stopped
+
+networks:
+  mind-realm-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+  redis-data:
+  milvus-data:
