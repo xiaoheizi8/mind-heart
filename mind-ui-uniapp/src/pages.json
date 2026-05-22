@@ -125,6 +125,31 @@
 			"style": {
 				"navigationBarTitleText": "通知中心"
 			}
+		},
+		{
+			"path": "pages/story/list",
+			"style": {
+				"navigationBarTitleText": "匿名故事",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/story/create",
+			"style": {
+				"navigationBarTitleText": "发布故事"
+			}
+		},
+		{
+			"path": "pages/story/detail",
+			"style": {
+				"navigationBarTitleText": "故事详情"
+			}
+		},
+		{
+			"path": "pages/story/favorites",
+			"style": {
+				"navigationBarTitleText": "我的收藏"
+			}
 		}
 	],
 	"globalStyle": {
@@ -150,6 +175,12 @@
 				"text": "日记",
 				"iconPath": "static/icons/diary.svg",
 				"selectedIconPath": "static/icons/diary-active.svg"
+			},
+			{
+				"pagePath": "pages/story/list",
+				"text": "故事",
+				"iconPath": "static/icons/story.svg",
+				"selectedIconPath": "static/icons/story-active.svg"
 			},
 			{
 				"pagePath": "pages/chat/chat",

@@ -16,10 +16,15 @@
     <description>用户端API模块</description>
 
     <dependencies>
+<!--        <dependency>-->
+<!--            <groupId>com.mindrealm</groupId>-->
+<!--            <artifactId>mind-realm-common</artifactId>-->
+<!--            <version>${project.version}</version>-->
+<!--        </dependency>-->
         <dependency>
             <groupId>com.mindrealm</groupId>
-            <artifactId>mind-realm-common</artifactId>
-            <version>${project.version}</version>
+            <artifactId>mind-realm-story</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.mindrealm</groupId>
@@ -92,6 +97,7 @@
             <groupId>com.github.librepdf</groupId>
             <artifactId>openpdf</artifactId>
         </dependency>
+
     </dependencies>
     <build>
         <plugins>

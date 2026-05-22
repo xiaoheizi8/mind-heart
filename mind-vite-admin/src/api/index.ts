@@ -164,4 +164,17 @@ export const documentApi = {
     }),
 };
 
+export const storyApi = {
+  // 获取待审核列表
+  getPendingList: (params?: { page?: number; size?: number; status?: number }) =>
+    request.get('/story/pending', { params }),
+  // 获取故事详情
+  getById: (id: number) => request.get(`/story/${id}`),
+  // 审核故事
+  audit: (id: number, data: { auditorId: number; approved: boolean; rejectReason?: string }) =>
+    request.post(`/story/${id}/audit`, data),
+  // 删除故事
+  delete: (id: number) => request.delete(`/story/${id}`),
+};
+
 export default request;

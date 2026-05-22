@@ -8,6 +8,7 @@ import KnowledgeManagement from './pages/KnowledgeManagement';
 import DiaryManagement from './pages/DiaryManagement';
 import RoleManagement from './pages/RoleManagement';
 import SystemMonitor from './pages/SystemMonitor';
+import StoryManagement from './pages/StoryManagement';
 
 const router = createBrowserRouter([
   {
@@ -24,6 +25,7 @@ const router = createBrowserRouter([
       { path: 'knowledge', element: <KnowledgeManagement /> },
       { path: 'warnings', element: <WarningManagement /> },
       { path: 'roles', element: <RoleManagement /> },
+      { path: 'stories', element: <StoryManagement /> },
       { path: 'monitor', element: <SystemMonitor /> },
     ],
   },

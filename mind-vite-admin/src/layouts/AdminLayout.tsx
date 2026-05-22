@@ -11,7 +11,8 @@ import {
   SettingOutlined,
   SafetyOutlined,
   MonitorOutlined,
-  HomeOutlined
+  HomeOutlined,
+  HeartOutlined
 } from '@ant-design/icons';
 import { adminAuthApi } from '../api';
 
@@ -51,6 +52,7 @@ const AdminLayout: React.FC = () => {
     '/knowledge': '知识库管理',
     '/warnings': '预警管理',
     '/roles': '角色权限',
+    '/stories': '故事管理',
     '/monitor': '系统监控',
   };
 
@@ -92,6 +94,7 @@ const AdminLayout: React.FC = () => {
     { key: '/', icon: <DashboardOutlined />, label: '数据概览', roles: [2, 3] },
     { key: '/users', icon: <UserOutlined />, label: '用户管理', roles: [3] },
     { key: '/diaries', icon: <FileTextOutlined />, label: '日记管理', roles: [2, 3] },
+    { key: '/stories', icon: <HeartOutlined />, label: '故事管理', roles: [2, 3] },
     { key: '/knowledge', icon: <BookOutlined />, label: '知识库管理', roles: [2, 3] },
     { key: '/warnings', icon: <WarningOutlined />, label: '预警管理', roles: [2, 3] },
     { key: '/roles', icon: <SafetyOutlined />, label: '角色权限', roles: [3] },

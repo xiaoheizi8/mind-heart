@@ -1,5 +1,7 @@
 package com.mindrealm.common.result;
 
+import lombok.Data;
+
 import java.io.Serializable;
 import java.util.List;
 
@@ -10,6 +12,7 @@ import java.util.List;
  * @code: 面向自己,面向未来
  * @createTime: 2026.4.2 22:31
  */
+@Data
 public class PageResult<T> implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -42,7 +45,7 @@ public class PageResult<T> implements Serializable {
     /**
      * 私有构造函数
      */
-    private PageResult() {
+    public PageResult() {
     }
 
     /**

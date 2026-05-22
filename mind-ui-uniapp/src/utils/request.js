@@ -568,6 +568,34 @@ export const settingsApi = {
   update: (data) => request.put('/user/settings', data)
 }
 
+/**
+ * 故事相关 API
+ */
+export const storyApi = {
+  // 发布故事
+  publish: (data) => request.post('/story/publish', data),
+  // 获取故事列表
+  getList: (params) => request.get('/story/list', params),
+  // 获取故事详情
+  getDetail: (id) => request.get(`/story/${id}`),
+  // 点赞
+  like: (id) => request.post(`/story/${id}/like`),
+  // 取消点赞
+  unlike: (id) => request.delete(`/story/${id}/like`),
+  // 发表评论
+  addComment: (id, data) => request.post(`/story/${id}/comment`, data),
+  // 获取评论列表
+  getComments: (id, params) => request.get(`/story/${id}/comments`, params),
+  // 收藏
+  favorite: (id) => request.post(`/story/${id}/favorite`),
+  // 获取我的收藏
+  getFavorites: (params) => request.get('/story/favorites', params),
+  // 获取温暖回复模板
+  getTemplates: (params) => request.get('/story/templates', params),
+  // 删除故事
+  delete: (id) => request.delete(`/story/${id}`)
+}
+
 export default {
   request,
   authApi,
@@ -578,5 +606,6 @@ export default {
   knowledgeApi,
   warningApi,
   notificationApi,
-  settingsApi
+  settingsApi,
+  storyApi
 }

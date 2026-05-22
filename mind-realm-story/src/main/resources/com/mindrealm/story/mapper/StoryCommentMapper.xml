@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mindrealm.story.mapper.StoryCommentMapper">
+
+    <resultMap id="BaseResultMap" type="com.mindrealm.story.model.entity.StoryComment">
+            <id property="id" column="id" />
+            <result property="storyId" column="story_id" />
+            <result property="userId" column="user_id" />
+            <result property="parentId" column="parent_id" />
+            <result property="content" column="content" />
+            <result property="isTemplate" column="is_template" />
+            <result property="templateId" column="template_id" />
+            <result property="likeCount" column="like_count" />
+            <result property="status" column="status" />
+            <result property="createdAt" column="created_at" />
+            <result property="updatedAt" column="updated_at" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,story_id,user_id,parent_id,content,is_template,
+        template_id,like_count,status,created_at,updated_at
+    </sql>
+</mapper>
