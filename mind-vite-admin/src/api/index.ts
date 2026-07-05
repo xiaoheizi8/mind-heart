@@ -177,4 +177,35 @@ export const storyApi = {
   delete: (id: number) => request.delete(`/story/${id}`),
 };
 
+export const esSyncApi = {
+  // 获取所有类型的同步状态
+  getAllStatus: () => request.get('/es/status'),
+  // 获取单个类型的同步状态
+  getStatus: (type: string) => request.get(`/es/status/${type}`),
+  // 全量同步
+  fullSync: (type: string, batchSize: number = 500) =>
+    request.post(`/es/sync/${type}/full`, null, { params: { batchSize } }),
+  // 单条同步
+  syncById: (type: string, id: number) => request.post(`/es/sync/${type}/${id}`),
+  // 单条删除
+  deleteById: (type: string, id: number) => request.delete(`/es/sync/${type}/${id}`),
+  // 重建索引
+  rebuildIndex: (type: string, batchSize: number = 500) =>
+    request.post(`/es/sync/${type}/rebuild`, null, { params: { batchSize } }),
+  // 列出支持的同步类型
+  getTypes: () => request.get('/es/types'),
+  // 全文搜索
+  search: (params: {
+    type: string;
+    keyword?: string;
+    status?: number;
+    emotionCategory?: string;
+    emotionType?: string;
+    page?: number;
+    size?: number;
+  }) => request.get('/es/search', { params }),
+  // 根据ID查询单条文档
+  getDocById: (type: string, id: number) => request.get(`/es/search/${type}/${id}`),
+};
+
 export default request;

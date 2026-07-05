@@ -9,6 +9,7 @@ import DiaryManagement from './pages/DiaryManagement';
 import RoleManagement from './pages/RoleManagement';
 import SystemMonitor from './pages/SystemMonitor';
 import StoryManagement from './pages/StoryManagement';
+import EsSyncManagement from './pages/EsSyncManagement';
 
 const router = createBrowserRouter([
   {
@@ -26,6 +27,7 @@ const router = createBrowserRouter([
       { path: 'warnings', element: <WarningManagement /> },
       { path: 'roles', element: <RoleManagement /> },
       { path: 'stories', element: <StoryManagement /> },
+      { path: 'es-sync', element: <EsSyncManagement /> },
       { path: 'monitor', element: <SystemMonitor /> },
     ],
   },

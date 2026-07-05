@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Layout, Menu, Avatar, Dropdown, theme, Tag, Breadcrumb, Space } from 'antd';
-import { 
-  DashboardOutlined, 
-  UserOutlined, 
+import {
+  DashboardOutlined,
+  UserOutlined,
   WarningOutlined,
   BookOutlined,
   FileTextOutlined,
@@ -12,7 +12,8 @@ import {
   SafetyOutlined,
   MonitorOutlined,
   HomeOutlined,
-  HeartOutlined
+  HeartOutlined,
+  SyncOutlined,
 } from '@ant-design/icons';
 import { adminAuthApi } from '../api';
 
@@ -53,6 +54,7 @@ const AdminLayout: React.FC = () => {
     '/warnings': '预警管理',
     '/roles': '角色权限',
     '/stories': '故事管理',
+    '/es-sync': 'ES数据同步',
     '/monitor': '系统监控',
   };
 
@@ -95,6 +97,7 @@ const AdminLayout: React.FC = () => {
     { key: '/users', icon: <UserOutlined />, label: '用户管理', roles: [3] },
     { key: '/diaries', icon: <FileTextOutlined />, label: '日记管理', roles: [2, 3] },
     { key: '/stories', icon: <HeartOutlined />, label: '故事管理', roles: [2, 3] },
+    { key: '/es-sync', icon: <SyncOutlined />, label: 'ES数据同步', roles: [3] },
     { key: '/knowledge', icon: <BookOutlined />, label: '知识库管理', roles: [2, 3] },
     { key: '/warnings', icon: <WarningOutlined />, label: '预警管理', roles: [2, 3] },
     { key: '/roles', icon: <SafetyOutlined />, label: '角色权限', roles: [3] },

@@ -55,6 +55,7 @@ public class DiaryController {
         }
         
         diary.setUserId(userId);
+
         Diary created = diaryService.create(diary);
         
         // 触发风险预警检测

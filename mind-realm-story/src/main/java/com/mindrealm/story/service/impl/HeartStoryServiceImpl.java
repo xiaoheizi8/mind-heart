@@ -3,6 +3,7 @@ package com.mindrealm.story.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.mindrealm.common.annotation.EsSync;
 import com.mindrealm.common.entity.Notification;
 import com.mindrealm.common.mapper.NotificationMapper;
 import com.mindrealm.common.result.PageResult;
@@ -103,7 +104,8 @@ public class HeartStoryServiceImpl extends ServiceImpl<HeartStoryMapper, HeartSt
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Long publishStory(Long userId, String title, String content, 
+    @EsSync("story")
+    public Long publishStory(Long userId, String title, String content,
                             String emotionType, String tags, Boolean isAnonymous) {
         log.info("publishStory: userId={}, title={}", userId, title);
         
@@ -139,17 +141,11 @@ public class HeartStoryServiceImpl extends ServiceImpl<HeartStoryMapper, HeartSt
             String sensitiveWord = detectSensitiveContent(story.getContent());
             if (sensitiveWord != null) {
                 log.warn("publishStory: 检测到敏感词 '{}', storyId={}", sensitiveWord, story.getId());
-                sendNotification(userId, "system", "故事审核提醒", 
-                        "您的故事 \"" + title + "\" 因包含敏感内容正在审核中，请耐心等待。");
-            } else {
-                // 无敏感词,自动通过审核
-                baseMapper.updateById(HeartStory.builder()
-                        .id(story.getId())
-                        .status(1)
-                        .publishedAt(LocalDateTime.now())
-                        .build());
-                log.info("publishStory: 自动审核通过, storyId={}", story.getId());
             }
+            
+            // 无论是否有敏感词，都需要管理员审核后才能显示
+            sendNotification(userId, "system", "故事审核提醒", 
+                    "您的故事 \"" + title + "\" 已提交，正在等待审核，请耐心等待。");
             
             return story.getId();
         }
@@ -348,6 +344,7 @@ public class HeartStoryServiceImpl extends ServiceImpl<HeartStoryMapper, HeartSt
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @EsSync("story")
     public boolean auditStory(Long storyId, Long auditorId, boolean approved, String rejectReason) {
         log.info("auditStory: storyId={}, auditorId={}, approved={}", storyId, auditorId, approved);
         
@@ -415,6 +412,7 @@ public class HeartStoryServiceImpl extends ServiceImpl<HeartStoryMapper, HeartSt
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @EsSync(value = "story", op = EsSync.Op.DELETE)
     public boolean deleteStory(Long storyId, Long userId) {
         log.info("deleteStory: storyId={}, userId={}", storyId, userId);
         

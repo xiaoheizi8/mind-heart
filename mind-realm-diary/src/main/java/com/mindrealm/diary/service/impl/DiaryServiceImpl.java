@@ -2,6 +2,7 @@ package com.mindrealm.diary.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.mindrealm.common.annotation.EsSync;
 import com.mindrealm.common.util.AesUtil;
 import com.mindrealm.common.util.ValidatorUtil;
 import com.mindrealm.diary.entity.Diary;
@@ -49,6 +50,7 @@ public class DiaryServiceImpl implements DiaryService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @EsSync("diary")
     public Diary create(Diary diary) {
         if (diary == null || !ValidatorUtil.isValidId(diary.getUserId())) {
             log.warn("create: 日记对象或用户ID无效");
@@ -124,6 +126,7 @@ public class DiaryServiceImpl implements DiaryService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @EsSync(value = "diary", op = EsSync.Op.DELETE)
     public boolean delete(Long id, Long userId) {
         if (!ValidatorUtil.isValidId(id) || !ValidatorUtil.isValidId(userId)) {
             return false;
@@ -167,6 +170,7 @@ public class DiaryServiceImpl implements DiaryService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @EsSync("diary")
     public Diary update(Diary diary) {
         if (diary == null || !ValidatorUtil.isValidId(diary.getId())) {
             log.warn("update: 日记对象或ID无效");
