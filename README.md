@@ -578,4 +578,4 @@ MIT License
   Made with ❤️ for teenager mental health
 </p>
 ## 作者最后想说的话
-这玩意其实就是个半成品，ai+我的一点点思路+设计模式堆上去的,玩具项目
+Java加油
