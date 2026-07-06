@@ -14,6 +14,7 @@ import com.mindrealm.story.model.vo.WarmReplyTemplateVO;
 import com.mindrealm.story.service.HeartStoryService;
 import com.mindrealm.story.service.StoryCommentService;
 import com.mindrealm.story.service.WarmReplyTemplateService;
+import com.mindrealm.warning.service.WarningService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.mindrealm.story.model.entity.StoryComment;
 import com.mindrealm.story.model.entity.WarmReplyTemplate;
@@ -39,6 +40,7 @@ public class HeartStoryController {
     private final HeartStoryService heartStoryService;
     private final StoryCommentService storyCommentService;
     private final WarmReplyTemplateService warmReplyTemplateService;
+    private final WarningService warningService;
 
     /**
      * 发布匿名故事
@@ -60,6 +62,8 @@ public class HeartStoryController {
         );
         
         if (storyId > 0) {
+            // 触发风险预警检测（同步关键词扫描 + Kafka异步深度分析）
+            warningService.analyzeRisk(userId, request.getContent());
             return Result.success(storyId);
         }
         return Result.error("发布失败");

@@ -84,6 +84,7 @@ application-secret.yml
 **/application-dev.yml
 **/application-prod.yml
 **/application-secret.yml
+**/application-local.yml
 !docs/
 
 # 数据库脚本和文档(不公开)

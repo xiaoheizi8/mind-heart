@@ -73,7 +73,7 @@ public class WarningServiceImpl implements WarningService {
                     .handled(0)
                     .createdAt(LocalDateTime.now())
                     .build();
-            
+
             warningMapper.insert(record);
             log.warn("创建预警记录: userId={}, riskLevel={}", userId, riskLevel);
 
@@ -250,4 +250,5 @@ public class WarningServiceImpl implements WarningService {
         }
         return content;
     }
+
 }

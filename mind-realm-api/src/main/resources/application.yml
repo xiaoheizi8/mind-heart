@@ -1,6 +1,7 @@
 spring:
   profiles:
-    active: prod
+    #local win 双机同一wifi
+    active: local
   encoding:
     charset: UTF-8
     enabled: true
