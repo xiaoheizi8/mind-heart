@@ -101,11 +101,20 @@ public class UserController {
         if (StringUtils.hasText(user.getAvatar())) {
             existingUser.setAvatar(user.getAvatar());
         }
+        if (StringUtils.hasText(user.getPhone())) {
+            existingUser.setPhone(user.getPhone());
+        }
+        if (StringUtils.hasText(user.getEmail())) {
+            existingUser.setEmail(user.getEmail());
+        }
         if (user.getAge() != null) {
             existingUser.setAge(user.getAge());
         }
         if (user.getGender() != null) {
             existingUser.setGender(user.getGender());
+        }
+        if (StringUtils.hasText(user.getGuardianPhone())) {
+            existingUser.setGuardianPhone(user.getGuardianPhone());
         }
         
         existingUser.setUpdatedAt(TimeUtil.now());

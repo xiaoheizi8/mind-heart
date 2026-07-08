@@ -15,7 +15,18 @@ export default {
   data() { return { form: { nickname: '', phone: '', email: '' }, saving: false } },
   onLoad() { this.loadProfile() },
   methods: {
-    async loadProfile() { try { const u = await userApi.getProfile(); if (u) this.form = { nickname: u.nickname || '', phone: u.phone || '', email: u.email || '' } } catch (e) {} },
+    async loadProfile() {
+      try {
+        const u = await userApi.getProfile()
+        if (u) {
+          Object.keys(u).forEach(key => {
+            if (u[key] !== null && u[key] !== undefined) {
+              this.form[key] = u[key]
+            }
+          })
+        }
+      } catch (e) {}
+    },
     async doSave() {
       if (this.form.phone && !/^1\d{10}$/.test(this.form.phone)) { uni.showToast({ title: '手机号格式不正确', icon: 'none' }); return }
       if (this.form.email && !/@/.test(this.form.email)) { uni.showToast({ title: '邮箱格式不正确', icon: 'none' }); return }

@@ -120,12 +120,18 @@
 				"navigationBarTitleText": "我的收藏"
 			}
 		},
-		{
-			"path": "pages/notification/list",
-			"style": {
-				"navigationBarTitleText": "通知中心"
-			}
-		},
+			{
+				"path": "pages/notification/list",
+				"style": {
+					"navigationBarTitleText": "通知中心"
+				}
+			},
+			{
+				"path": "pages/bind/approve",
+				"style": {
+					"navigationBarTitleText": "绑定请求"
+				}
+			},
 		{
 			"path": "pages/story/list",
 			"style": {

@@ -32,7 +32,7 @@
         <text class="stat-num">{{ stats.chatDays }}</text>
         <text class="stat-label">陪伴天数</text>
       </view>
-      <view class="stat-item" @click="goToPage('/pages/emotion/report')">
+      <view class="stat-item" @click="goToPage('/pages/story/list')">
         <text class="stat-num">{{ stats.streak }}</text>
         <text class="stat-label">连续打卡</text>
       </view>
@@ -47,7 +47,7 @@
           <text class="menu-label">我的日记</text>
           <text class="menu-arrow">></text>
         </view>
-        <view class="menu-item" @click="goToPage('/pages/emotion/report')">
+        <view class="menu-item" @click="goToPage('/pages/story/list')">
           <text class="menu-icon">📊</text>
           <text class="menu-label">情绪报告</text>
           <text class="menu-arrow">></text>
@@ -66,6 +66,12 @@
         <view class="menu-item" @click="goToPage('/pages/notification/list')">
           <text class="menu-icon">🔔</text>
           <text class="menu-label">通知中心</text>
+          <view v-if="unreadCount > 0" class="badge">{{ unreadCount > 99 ? '99+' : unreadCount }}</view>
+          <text class="menu-arrow">></text>
+        </view>
+        <view class="menu-item" @click="goToPage('/pages/bind/approve')">
+          <text class="menu-icon">👨‍👩‍👧</text>
+          <text class="menu-label">绑定管理</text>
           <text class="menu-arrow">></text>
         </view>
       </view>
@@ -112,12 +118,13 @@
 </template>
 
 <script>
-import { authApi, userApi } from '../../utils/request.js'
+import { authApi, userApi, notificationApi } from '../../utils/request.js'
 
 export default {
   data() {
     return {
       userInfo: {},
+      unreadCount: 0,
       stats: {
         diaryCount: 0,
         chatDays: 0,
@@ -141,8 +148,17 @@ export default {
   },
   onShow() {
     this.loadUserInfo()
+    this.fetchUnreadCount()
   },
   methods: {
+    async fetchUnreadCount() {
+      try {
+        const res = await notificationApi.getUnreadCount()
+        const count = typeof res === 'number' ? res : (res?.count ?? res?.data?.count ?? 0)
+        this.unreadCount = count
+        uni.setStorageSync('unreadNotificationCount', count)
+      } catch (e) { this.unreadCount = parseInt(uni.getStorageSync('unreadNotificationCount') || 0) }
+    },
     async loadUserInfo() {
       try {
         // 不使用缓存，确保获取最新数据
@@ -184,8 +200,8 @@ export default {
   const tabBarPages = [
     '/pages/diary/list', 
     '/pages/chat/chat', 
-    '/pages/emotion/report',
-    '/pages/notification/list'
+    '/pages/story/list',
+    '/pages/profile/index'
     // 如果还有其他 TabBar 页面，请继续添加
   ];
 
@@ -367,6 +383,12 @@ export default {
 .menu-arrow {
   font-size: 28rpx;
   color: var(--text-tertiary);
+}
+
+.badge {
+  min-width: 36rpx; height: 36rpx; line-height: 36rpx;
+  background: #FF4D4F; color: #fff; font-size: 20rpx;
+  border-radius: 18rpx; text-align: center; padding: 0 8rpx;
 }
 
 .emergency-section {

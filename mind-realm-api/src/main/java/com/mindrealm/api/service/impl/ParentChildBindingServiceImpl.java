@@ -2,8 +2,10 @@ package com.mindrealm.api.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.mindrealm.api.service.ParentChildBindingService;
+import com.mindrealm.common.entity.Notification;
 import com.mindrealm.common.entity.ParentChildBinding;
 import com.mindrealm.common.entity.User;
+import com.mindrealm.common.mapper.NotificationMapper;
 import com.mindrealm.common.mapper.ParentChildBindingMapper;
 import com.mindrealm.common.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +32,7 @@ public class ParentChildBindingServiceImpl implements ParentChildBindingService 
     private static final Logger log = LoggerFactory.getLogger(ParentChildBindingServiceImpl.class);
 
     private final ParentChildBindingMapper bindingMapper;
+    private final NotificationMapper notificationMapper;
     private final UserService userService;
 
     @Override
@@ -86,6 +89,21 @@ public class ParentChildBindingServiceImpl implements ParentChildBindingService 
 
         bindingMapper.insert(binding);
         log.info("发送绑定请求: parentId={}, childId={}, bindingId={}", parentId, child.getId(), binding.getId());
+
+        // 通知孩子：有家长请求绑定
+        User parent = userService.findById(parentId);
+        String parentName = parent != null ? (parent.getNickname() != null ? parent.getNickname() : parent.getUsername()) : "一位家长";
+        Notification notif = Notification.builder()
+                .userId(child.getId())
+                .type("system")
+                .title("家长绑定请求")
+                .content(parentName + " 请求绑定为您的家长，请前往个人中心确认或拒绝")
+                .isRead(0)
+                .createdAt(java.time.LocalDateTime.now())
+                .build();
+        notificationMapper.insert(notif);
+        log.info("已通知孩子绑定请求: childId={}", child.getId());
+
         return binding;
     }
 
@@ -107,6 +125,19 @@ public class ParentChildBindingServiceImpl implements ParentChildBindingService 
         binding.setResponseTime(LocalDateTime.now());
         bindingMapper.updateById(binding);
         log.info("同意绑定请求: bindingId={}, childId={}", bindingId, childId);
+
+        // 通知家长：孩子已同意绑定
+        User child = userService.findById(childId);
+        String childName = child != null ? (child.getNickname() != null ? child.getNickname() : child.getUsername()) : "孩子";
+        Notification notif = Notification.builder()
+                .userId(binding.getParentId())
+                .type("system")
+                .title("绑定请求已通过")
+                .content(childName + " 已同意您的绑定请求，现在可以查看孩子的情绪动态了")
+                .isRead(0)
+                .createdAt(LocalDateTime.now())
+                .build();
+        notificationMapper.insert(notif);
     }
 
     @Override
@@ -127,6 +158,19 @@ public class ParentChildBindingServiceImpl implements ParentChildBindingService 
         binding.setResponseTime(LocalDateTime.now());
         bindingMapper.updateById(binding);
         log.info("拒绝绑定请求: bindingId={}, childId={}", bindingId, childId);
+
+        // 通知家长：孩子已拒绝绑定
+        User child = userService.findById(childId);
+        String childName = child != null ? (child.getNickname() != null ? child.getNickname() : child.getUsername()) : "孩子";
+        Notification notif = Notification.builder()
+                .userId(binding.getParentId())
+                .type("system")
+                .title("绑定请求被拒绝")
+                .content(childName + " 拒绝了您的绑定请求")
+                .isRead(0)
+                .createdAt(LocalDateTime.now())
+                .build();
+        notificationMapper.insert(notif);
     }
 
     @Override

@@ -335,7 +335,11 @@ export const userApi = {
   resetPassword: (data) => request.post('/user/resetPassword', data),
   bindEmail: (data) => request.post('/user/bindEmail', data),
   bindPhone: (phone) => request.post('/user/bindPhone', { phone }),
-  setGuardian: (phone) => request.post('/user/guardian', { guardianPhone: phone })
+  setGuardian: (phone) => request.post('/user/guardian', { guardianPhone: phone }),
+  // 家长绑定相关
+  getBindRequests: () => request.get('/user/bind/requests'),
+  approveBind: (bindingId) => request.post(`/user/bind/approve/${bindingId}`),
+  rejectBind: (bindingId) => request.post(`/user/bind/reject/${bindingId}`)
 }
 
 /**

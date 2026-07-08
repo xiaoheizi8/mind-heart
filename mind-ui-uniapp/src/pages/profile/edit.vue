@@ -155,21 +155,32 @@ export default {
       return avatar
     }
   },
-  onShow() {
+  onLoad() {
     this.loadProfile()
   },
   methods: {
     async loadProfile() {
       try {
         const res = await userApi.getProfile()
-        this.userInfo = { ...this.userInfo, ...res }
+        // 只合并有值的字段，避免 null 覆盖用户输入
+        if (res) {
+          Object.keys(res).forEach(key => {
+            if (res[key] !== null && res[key] !== undefined) {
+              this.userInfo[key] = res[key]
+            }
+          })
+        }
         if (this.userInfo.age) {
           this.ageIndex = this.userInfo.age - 13
         }
       } catch (e) {
         const cached = uni.getStorageSync('userInfo')
         if (cached) {
-          this.userInfo = { ...this.userInfo, ...cached }
+          Object.keys(cached).forEach(key => {
+            if (cached[key] !== null && cached[key] !== undefined) {
+              this.userInfo[key] = cached[key]
+            }
+          })
         }
       }
     },
@@ -245,12 +256,14 @@ export default {
       this.saving = true
       
       try {
-        // 构建更新数据（只保留需要更新的字段）
+        // 构建更新数据
         const updateData = {
           nickname: this.userInfo.nickname,
           avatar: this.userInfo.avatar,
           age: this.userInfo.age,
           gender: this.userInfo.gender,
+          phone: this.userInfo.phone,
+          guardianPhone: this.userInfo.guardianPhone,
           bio: this.userInfo.bio
         }
         

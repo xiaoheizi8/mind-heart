@@ -143,15 +143,18 @@ public class UserServiceImpl implements UserService {
             return false;
         }
         
-        log.info("updateUser: id={}, avatar={}", user.getId(), user.getAvatar());
-        
+        log.info("updateUser: id={}, phone={}, email={}", user.getId(), user.getPhone());
+
         // 使用MyBatis-Plus的update+Wrapper来确保更新
         User updateUser = new User();
         updateUser.setId(user.getId());
         updateUser.setAvatar(user.getAvatar());
         updateUser.setNickname(user.getNickname());
+        updateUser.setPhone(user.getPhone());
+        updateUser.setEmail(user.getEmail());
         updateUser.setAge(user.getAge());
         updateUser.setGender(user.getGender());
+        updateUser.setGuardianPhone(user.getGuardianPhone());
         updateUser.setUpdatedAt(TimeUtil.now());
         
         int result = userMapper.updateById(updateUser);

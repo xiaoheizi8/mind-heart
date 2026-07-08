@@ -58,21 +58,21 @@ export default {
     async loadNotifications() {
       if (this.loading) return
       this.loading = true
-      
+
       try {
         const res = await notificationApi.getList({ page: this.page, size: this.pageSize })
-        if (res.code === 200 && res.data) {
-          const iconMap = {
-            'reminder': '⏰',
-            'system': '💜',
-            'warning': '💡',
-            'emotion': '😊'
-          }
-          this.list = (res.data.records || []).map(item => ({
-            ...item,
-            icon: iconMap[item.type] || '🔔'
-          }))
+        // 拦截器已解包为 PageResult: { records, total, current, size, pages }
+        const records = res?.records || res?.data?.records || []
+        const iconMap = {
+          'reminder': '⏰',
+          'system': '💜',
+          'warning': '💡',
+          'emotion': '😊'
         }
+        this.list = records.map(item => ({
+          ...item,
+          icon: iconMap[item.type] || '🔔'
+        }))
       } catch (e) {
         console.log('获取通知失败', e)
       } finally {
@@ -82,17 +82,32 @@ export default {
     handleClick(item) {
       if (!item.isRead) {
         item.isRead = true
+        notificationApi.markRead(item.id).catch(() => {})
+        // 立即更新未读计数和角标
+        const cur = parseInt(uni.getStorageSync('unreadNotificationCount') || 0)
+        const newCount = Math.max(0, cur - 1)
+        uni.setStorageSync('unreadNotificationCount', newCount)
+        if (newCount > 0) {
+          uni.setTabBarBadge({ index: 4, text: String(newCount > 99 ? '99+' : newCount) }).catch(() => {})
+        } else {
+          uni.removeTabBarBadge({ index: 4 }).catch(() => {})
+        }
       }
-      
-      if (item.type === 'reminder') {
+
+      // 系统通知/绑定请求 → 跳转绑定审批页
+      const title = (item.title || '')
+      if (item.type === 'system' && (title.includes('绑定') || title.includes('家长'))) {
+        uni.navigateTo({ url: '/pages/bind/approve' })
+      } else if (item.type === 'reminder') {
         uni.navigateTo({ url: '/pages/diary/create' })
       }
     },
     markAllRead() {
       notificationApi.markAllRead().then(() => {
-        this.list.forEach(item => {
-          item.isRead = true
-        })
+        this.list.forEach(item => { item.isRead = true })
+        // 清除未读计数和角标
+        uni.setStorageSync('unreadNotificationCount', 0)
+        uni.removeTabBarBadge({ index: 4 }).catch(() => {})
         uni.showToast({ title: '已全部标记为已读', icon: 'success' })
       }).catch(() => {
         uni.showToast({ title: '操作失败', icon: 'none' })
