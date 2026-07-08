@@ -116,9 +116,12 @@ public class SecurityConfig {
                 ).permitAll()
                 .requestMatchers("/admin/v1/user/**", "/admin/v1/role/**", "/admin/v1/menu/**", "/admin/v1/monitor/**").hasAuthority("ROLE_ADMIN")
                 .requestMatchers("/admin/v1/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_COUNSELOR")
+                // 家长端接口 - 仅家长角色可访问
+                .requestMatchers("/api/v1/parent/**").hasAuthority("ROLE_PARENT")
                 // 用户端接口需要认证(包括SSE流式对话)
-                .requestMatchers("/api/v1/chat/**", "/api/v1/user/**", "/api/v1/diary/**", "/api/v1/emotion/**", 
-                                 "/api/v1/warning/**", "/api/v1/knowledge/**", "/api/v1/notification/**", "/api/v1/file/**").authenticated()
+                .requestMatchers("/api/v1/chat/**", "/api/v1/user/**", "/api/v1/diary/**", "/api/v1/emotion/**",
+                                 "/api/v1/warning/**", "/api/v1/knowledge/**", "/api/v1/notification/**", "/api/v1/file/**",
+                                 "/api/v1/story/**", "/api/v1/feedback/**", "/api/v1/upload/**").authenticated()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(antiCrawlerFilter, UsernamePasswordAuthenticationFilter.class)

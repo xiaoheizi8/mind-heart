@@ -55,7 +55,8 @@ public class StoryEsSyncServiceImpl
         } else {
             return;
         }
-        if (story != null) {
+        // 仅同步已审核通过的故事到ES，防止未审核内容被搜索到
+        if (story != null && story.getStatus() != null && story.getStatus() == 1) {
             storyEsRepository.save(toEsDocument(story));
         }
     }

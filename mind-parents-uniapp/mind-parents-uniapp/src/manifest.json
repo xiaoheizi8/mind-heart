@@ -1,0 +1,10 @@
+{
+    "name" : "心域家长版",
+    "appid" : "__UNI__MINDREALM_PARENT",
+    "description" : "心域家长版——关注孩子的心理健康",
+    "versionName" : "1.0.0",
+    "versionCode" : "100",
+    "transformPx" : false,
+    "uniStatistics": { "enable": false },
+    "vueVersion" : "3"
+}

@@ -76,8 +76,7 @@ public class AdminStoryController {
      */
     @DeleteMapping("/{storyId}")
     public Result<Boolean> deleteStory(@PathVariable Long storyId) {
-        // 管理员删除，userId设为0标识管理端操作
-        boolean success = heartStoryService.deleteStory(storyId, 0L);
+        boolean success = heartStoryService.adminDeleteStory(storyId);
         return Result.success(success);
     }
 }

@@ -1,6 +1,8 @@
 package com.mindrealm.api.controller;
 
+import com.mindrealm.api.service.ParentChildBindingService;
 import com.mindrealm.common.context.RequestContext;
+import com.mindrealm.common.entity.ParentChildBinding;
 import com.mindrealm.common.entity.User;
 import com.mindrealm.common.result.Result;
 import com.mindrealm.common.service.impl.EmailService;
@@ -13,6 +15,7 @@ import org.springframework.util.DigestUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -30,9 +33,12 @@ public class UserController {
 
     @Autowired
     private UserService userService;
-    
+
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private ParentChildBindingService parentChildBindingService;
 
     /**
      * 获取当前用户信息
@@ -361,5 +367,44 @@ public class UserController {
         }
         
         return Result.fail("监护人信息设置失败");
+    }
+
+    /**
+     * 获取待处理的家长绑定请求（孩子端）
+     */
+    @GetMapping("/bind/requests")
+    public Result<List<ParentChildBinding>> getBindRequests() {
+        Long childId = RequestContext.getCurrentUserId();
+        if (childId == null) {
+            return Result.unauthorized();
+        }
+        List<ParentChildBinding> requests = parentChildBindingService.getIncomingRequests(childId);
+        return Result.success(requests);
+    }
+
+    /**
+     * 同意家长绑定请求（孩子端）
+     */
+    @PostMapping("/bind/approve/{bindingId}")
+    public Result<Void> approveBind(@PathVariable Long bindingId) {
+        Long childId = RequestContext.getCurrentUserId();
+        if (childId == null) {
+            return Result.unauthorized();
+        }
+        parentChildBindingService.approveBindRequest(bindingId, childId);
+        return Result.ok("绑定成功");
+    }
+
+    /**
+     * 拒绝家长绑定请求（孩子端）
+     */
+    @PostMapping("/bind/reject/{bindingId}")
+    public Result<Void> rejectBind(@PathVariable Long bindingId) {
+        Long childId = RequestContext.getCurrentUserId();
+        if (childId == null) {
+            return Result.unauthorized();
+        }
+        parentChildBindingService.rejectBindRequest(bindingId, childId);
+        return Result.ok("已拒绝");
     }
 }

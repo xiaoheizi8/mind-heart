@@ -2,13 +2,16 @@ package com.mindrealm.api.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.mindrealm.common.context.RequestContext;
+import com.mindrealm.common.event.EventType;
 import com.mindrealm.common.result.PageResult;
 import com.mindrealm.common.result.Result;
 import com.mindrealm.diary.entity.Diary;
 import com.mindrealm.diary.entity.EmotionReport;
 import com.mindrealm.diary.service.DiaryService;
 import com.mindrealm.diary.service.EmotionReportService;
-import com.mindrealm.warning.service.WarningService;
+import com.mindrealm.mq.constant.KafkaTopics;
+import com.mindrealm.mq.event.WarningAnalyzeEvent;
+import com.mindrealm.mq.producer.KafkaEventPublisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
@@ -30,10 +33,10 @@ public class DiaryController {
 
     @Autowired
     private DiaryService diaryService;
-    
+
     @Autowired
-    private WarningService warningService;
-    
+    private KafkaEventPublisher kafkaEventPublisher;
+
     @Autowired
     private EmotionReportService reportService;
 
@@ -57,12 +60,23 @@ public class DiaryController {
         diary.setUserId(userId);
 
         Diary created = diaryService.create(diary);
-        
-        // 触发风险预警检测
+
+        // 通过 Kafka 异步发送风险预警分析事件
         if (StringUtils.hasText(diary.getContent())) {
-            warningService.analyzeRisk(userId, diary.getContent());
+            WarningAnalyzeEvent warningEvent = WarningAnalyzeEvent.builder()
+                    .userId(userId)
+                    .content(diary.getContent())
+                    .contextType("diary")
+                    .contextId(created.getId())
+                    .build();
+            kafkaEventPublisher.publish(
+                    KafkaTopics.WARNING_ANALYZE,
+                    String.valueOf(userId),
+                    EventType.WARNING_ANALYZE,
+                    warningEvent
+            );
         }
-        
+
         return Result.success(created);
     }
 
@@ -104,12 +118,23 @@ public class DiaryController {
         }
         
         Diary updated = diaryService.update(existing);
-        
-        // 触发风险检测
+
+        // 通过 Kafka 异步发送风险预警分析事件
         if (StringUtils.hasText(updated.getContent())) {
-            warningService.analyzeRisk(currentUserId, updated.getContent());
+            WarningAnalyzeEvent warningEvent = WarningAnalyzeEvent.builder()
+                    .userId(currentUserId)
+                    .content(updated.getContent())
+                    .contextType("diary")
+                    .contextId(updated.getId())
+                    .build();
+            kafkaEventPublisher.publish(
+                    KafkaTopics.WARNING_ANALYZE,
+                    String.valueOf(currentUserId),
+                    EventType.WARNING_ANALYZE,
+                    warningEvent
+            );
         }
-        
+
         return Result.success(updated);
     }
 

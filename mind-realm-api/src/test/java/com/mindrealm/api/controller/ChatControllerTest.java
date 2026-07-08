@@ -2,7 +2,7 @@ package com.mindrealm.api.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mindrealm.core.service.AiChatService;
-import com.mindrealm.warning.service.WarningService;
+import com.mindrealm.mq.producer.KafkaEventPublisher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,7 +36,7 @@ class ChatControllerTest {
     private AiChatService aiChatService;
 
     @Mock
-    private WarningService warningService;
+    private KafkaEventPublisher kafkaEventPublisher;
 
     @InjectMocks
     private ChatController chatController;
@@ -64,7 +64,7 @@ class ChatControllerTest {
     @Test
     void testSendMessage() throws Exception {
         when(aiChatService.chat(anyLong(), anyString(), anyString())).thenReturn("你好！很高兴为你服务。");
-        when(warningService.analyzeRisk(anyLong(), anyString())).thenReturn(null);
+        doNothing().when(kafkaEventPublisher).publish(anyString(), anyString(), any(), any());
 
         mockMvc.perform(post("/api/v1/chat/send")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -73,14 +73,14 @@ class ChatControllerTest {
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data.reply").value("你好！很高兴为你服务。"));
 
-        verify(warningService).analyzeRisk(eq(1L), eq("你好"));
+        verify(kafkaEventPublisher).publish(anyString(), anyString(), any(), any());
         verify(aiChatService).chat(eq(1L), eq("你好"), eq("listener"));
     }
 
     @Test
     void testSendMessageWithPersona() throws Exception {
         when(aiChatService.chat(anyLong(), anyString(), anyString())).thenReturn("我理解你的感受。");
-        when(warningService.analyzeRisk(anyLong(), anyString())).thenReturn(null);
+        doNothing().when(kafkaEventPublisher).publish(anyString(), anyString(), any(), any());
 
         mockMvc.perform(post("/api/v1/chat/send")
                         .contentType(MediaType.APPLICATION_JSON)

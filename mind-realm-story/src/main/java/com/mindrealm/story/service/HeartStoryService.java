@@ -147,4 +147,12 @@ public interface HeartStoryService extends IService<HeartStory> {
      * @return 故事详情
      */
     AdminStoryVO getAdminStoryDetail(Long storyId);
+
+    /**
+     * 管理员删除故事（无需用户权限校验）
+     *
+     * @param storyId 故事ID
+     * @return 是否成功
+     */
+    boolean adminDeleteStory(Long storyId);
 }

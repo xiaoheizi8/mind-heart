@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
     avatar VARCHAR(255) COMMENT '头像 URL',
     age INT COMMENT '年龄',
     gender TINYINT DEFAULT 3 COMMENT '性别 (1 男 2 女 3 未知)',
-    role TINYINT DEFAULT 1 COMMENT '角色 (1 用户 2 咨询师 3 管理员)',
+    role TINYINT DEFAULT 1 COMMENT '角色 (1 用户 2 咨询师 3 管理员 5 家长)',
     status TINYINT DEFAULT 1 COMMENT '状态 (0 禁用 1 正常)',
     guardian_phone VARCHAR(20) COMMENT '监护人电话',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -23,6 +23,22 @@ CREATE TABLE IF NOT EXISTS users (
     INDEX idx_phone (phone),
     INDEX idx_email (email)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
+
+-- 家长-孩子绑定关系表
+CREATE TABLE IF NOT EXISTS parent_child_binding (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    parent_id BIGINT NOT NULL COMMENT '家长用户ID',
+    child_id BIGINT NOT NULL COMMENT '孩子用户ID',
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING' COMMENT '绑定状态: PENDING/APPROVED/REJECTED',
+    request_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '请求时间',
+    response_time DATETIME COMMENT '响应时间',
+    UNIQUE KEY uk_parent_child (parent_id, child_id),
+    INDEX idx_parent_id (parent_id),
+    INDEX idx_child_id (child_id),
+    INDEX idx_status (status),
+    FOREIGN KEY (parent_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (child_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='家长-孩子绑定关系表';
 
 -- 情绪日记表
 CREATE TABLE IF NOT EXISTS diary (
@@ -189,10 +205,15 @@ INSERT IGNORE INTO users (username, password, nickname, phone, email, age, gende
 ('test_user', 'e10adc3949ba59abbe56e057f20f883e', '测试用户', '13800138000', 'test@example.com', 18, 1, 1, 1, NOW()),
 ('xiaoming', 'e10adc3949ba59abbe56e057f20f883e', '小明', '13800138001', 'xiaoming@example.com', 16, 1, 1, 1, NOW()),
 ('xiaohua', 'e10adc3949ba59abbe56e057f20f883e', '小花', '13800138002', 'xiaohua@example.com', 17, 2, 1, 1, NOW()),
-('counselor', 'e10adc3949ba59abbe56e057f20f883e', '心理咨询师', '13900139000', 'counselor@example.com', 30, 1, 2, 1, NOW()),
-('admin', 'e10adc3949ba59abbe56e057f20f883e', '系统管理员', '13900139001', 'admin@example.com', 35, 1, 3, 1, NOW());
+    ('counselor', 'e10adc3949ba59abbe56e057f20f883e', '心理咨询师', '13900139000', 'counselor@example.com', 30, 1, 2, 1, NOW()),
+    ('admin', 'e10adc3949ba59abbe56e057f20f883e', '系统管理员', '13900139001', 'admin@example.com', 35, 1, 3, 1, NOW()),
+    ('parent_test', 'e10adc3949ba59abbe56e057f20f883e', '小明家长', '13800138005', 'parent@example.com', 40, 1, 5, 1, NOW());
 
 -- ... existing code ...
+-- 插入家长-孩子绑定关系
+INSERT IGNORE INTO parent_child_binding (parent_id, child_id, status, request_time, response_time) VALUES
+(6, 2, 'APPROVED', DATE_SUB(NOW(), INTERVAL 7 DAY), DATE_SUB(NOW(), INTERVAL 6 DAY));
+
 -- 插入测试日记数据
 INSERT INTO diary (user_id, content, emotion_tags, emotion_score, emotion_category, ai_analysis, created_at) VALUES
 (1, '今天考试没考好，心情很低落。但是想了想，一次考试并不能决定什么，下次继续努力吧。人生还有很长的路要走，不应该被一次失败打倒。', '["考试", "失落", "自我安慰"]', -0.30, 'sad', '从你的日记中，我感受到你正在经历考试失利的挫折。这是一个很常见的情绪体验。值得注意的是，你在文字中已经展现出了很好的自我调节能力，能够客观地看待这次经历。继续保持这种积极的思维方式。', DATE_SUB(NOW(), INTERVAL 1 DAY)),

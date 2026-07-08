@@ -35,7 +35,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -58,28 +57,45 @@ public class HeartStoryServiceImpl extends ServiceImpl<HeartStoryMapper, HeartSt
     private final NotificationMapper notificationMapper;
     private final UserService userService;
 
-    // 敏感词列表 先基于内存
+    // 高风险敏感词列表 — 检测到自动拒绝
     private static final Set<String> SENSITIVE_WORDS = new HashSet<>(Arrays.asList(
             "自杀", "自残", "死", "杀", "恨", "讨厌自己", "活着没意思", "不想活", "结束生命",
             "暴力", "报复", "毁灭"
     ));
-    private static final Pattern SENSITIVE_PATTERN = Pattern.compile(
-            ".*(" + String.join("|", SENSITIVE_WORDS) + ").*"
-    );
 
-    // 举报关键词
+    // 违规举报关键词 — 检测到自动拒绝
     private static final Set<String> REPORT_WORDS = new HashSet<>(Arrays.asList(
             "举报", "违规", "广告", "诈骗", "涉黄", "涉政", "谣言"
     ));
 
     /**
-     * 内容敏感词检测
+     * 内容敏感词检测结果
      */
-    private String detectSensitiveContent(String content) {
+    private static class SensitiveCheckResult {
+        final String matchedWord;
+        final String category;  // "sensitive" 高风险敏感词 / "report" 违规词
+
+        SensitiveCheckResult(String matchedWord, String category) {
+            this.matchedWord = matchedWord;
+            this.category = category;
+        }
+    }
+
+    /**
+     * 内容敏感词检测 — 同时检测高风险敏感词和违规举报词
+     */
+    private SensitiveCheckResult detectSensitiveContent(String content) {
         if (!StringUtils.hasText(content)) return null;
+        // 优先检测高风险敏感词
         for (String word : SENSITIVE_WORDS) {
             if (content.contains(word)) {
-                return word;
+                return new SensitiveCheckResult(word, "sensitive");
+            }
+        }
+        // 再检测违规举报词
+        for (String word : REPORT_WORDS) {
+            if (content.contains(word)) {
+                return new SensitiveCheckResult(word, "report");
             }
         }
         return null;
@@ -104,11 +120,29 @@ public class HeartStoryServiceImpl extends ServiceImpl<HeartStoryMapper, HeartSt
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @EsSync("story")
     public Long publishStory(Long userId, String title, String content,
                             String emotionType, String tags, Boolean isAnonymous) {
         log.info("publishStory: userId={}, title={}", userId, title);
-        
+
+        // 自动敏感词检测 — 高风险/违规内容直接拒绝，无需人工审核
+        SensitiveCheckResult sensitiveResult = detectSensitiveContent(content);
+        int initialStatus = 0;  // 默认待审核
+        String rejectReason = null;
+
+        if (sensitiveResult != null) {
+            if ("sensitive".equals(sensitiveResult.category)) {
+                initialStatus = 2;  // 自动拒绝
+                rejectReason = "内容包含高风险敏感词，系统自动拒绝";
+                log.warn("publishStory: 检测到高风险敏感词 '{}', userId={}, 自动拒绝",
+                        sensitiveResult.matchedWord, userId);
+            } else if ("report".equals(sensitiveResult.category)) {
+                initialStatus = 2;  // 自动拒绝
+                rejectReason = "内容包含违规关键词，系统自动拒绝";
+                log.warn("publishStory: 检测到违规关键词 '{}', userId={}, 自动拒绝",
+                        sensitiveResult.matchedWord, userId);
+            }
+        }
+
         HeartStory story = HeartStory.builder()
                 .userId(userId)
                 .title(title)
@@ -116,7 +150,8 @@ public class HeartStoryServiceImpl extends ServiceImpl<HeartStoryMapper, HeartSt
                 .emotionType(emotionType)
                 .tags(tags)
                 .isAnonymous(isAnonymous ? 1 : 0)
-                .status(0)  // 待审核
+                .status(initialStatus)
+                .rejectReason(rejectReason)
                 .likeCount(0)
                 .commentCount(0)
                 .shareCount(0)
@@ -135,18 +170,18 @@ public class HeartStoryServiceImpl extends ServiceImpl<HeartStoryMapper, HeartSt
         
         int result = baseMapper.insert(story);
         if (result > 0) {
-            log.info("publishStory: 发布成功, storyId={}", story.getId());
-            
-            // 自动敏感词检测
-            String sensitiveWord = detectSensitiveContent(story.getContent());
-            if (sensitiveWord != null) {
-                log.warn("publishStory: 检测到敏感词 '{}', storyId={}", sensitiveWord, story.getId());
+            log.info("publishStory: 发布成功, storyId={}, status={}", story.getId(), story.getStatus());
+
+            if (initialStatus == 2) {
+                // 自动拒绝 — 通知用户审核未通过
+                sendNotification(userId, "system", "故事审核未通过",
+                        "您的故事 \"" + title + "\" 未通过审核。原因：" + rejectReason);
+            } else {
+                // 待审核 — 通知用户等待审核
+                sendNotification(userId, "system", "故事审核提醒",
+                        "您的故事 \"" + title + "\" 已提交，正在等待审核，请耐心等待。");
             }
-            
-            // 无论是否有敏感词，都需要管理员审核后才能显示
-            sendNotification(userId, "system", "故事审核提醒", 
-                    "您的故事 \"" + title + "\" 已提交，正在等待审核，请耐心等待。");
-            
+
             return story.getId();
         }
         return 0L;
@@ -199,7 +234,13 @@ public class HeartStoryServiceImpl extends ServiceImpl<HeartStoryMapper, HeartSt
             log.warn("getStoryDetail: 故事不存在, storyId={}", storyId);
             return null;
         }
-        
+
+        // 只返回已审核通过的故事，防止未审核内容被直接访问
+        if (story.getStatus() == null || story.getStatus() != 1) {
+            log.warn("getStoryDetail: 故事未审核或已下架, storyId={}, status={}", storyId, story.getStatus());
+            return null;
+        }
+
         // 增加浏览数
         HeartStory update = new HeartStory();
         update.setId(storyId);
@@ -330,11 +371,13 @@ public class HeartStoryServiceImpl extends ServiceImpl<HeartStoryMapper, HeartSt
         Page<StoryFavorite> favPage = storyFavoriteMapper.selectPage(
                 new Page<>(page, size), favWrapper);
         
-        // 获取收藏的故事详情
+        // 获取收藏的故事详情（仅返回已审核通过的）
         List<StoryListVO> voList = favPage.getRecords().stream()
                 .map(fav -> {
                     HeartStory story = baseMapper.selectById(fav.getStoryId());
-                    return story != null ? StoryConverter.toStoryListVO(story) : null;
+                    // 只返回已审核通过的故事
+                    return (story != null && story.getStatus() != null && story.getStatus() == 1)
+                            ? StoryConverter.toStoryListVO(story) : null;
                 })
                 .filter(vo -> vo != null)
                 .collect(Collectors.toList());
@@ -481,6 +524,37 @@ public class HeartStoryServiceImpl extends ServiceImpl<HeartStoryMapper, HeartSt
         }
 
         return StoryConverter.toAdminStoryVO(story);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @EsSync(value = "story", op = EsSync.Op.DELETE)
+    public boolean adminDeleteStory(Long storyId) {
+        log.info("adminDeleteStory: storyId={}", storyId);
+
+        HeartStory story = baseMapper.selectById(storyId);
+        if (story == null) {
+            log.warn("adminDeleteStory: 故事不存在, storyId={}", storyId);
+            return false;
+        }
+
+        // 软删除 - 更新状态为已下架
+        HeartStory update = new HeartStory();
+        update.setId(storyId);
+        update.setStatus(3);  // 已下架
+        update.setUpdatedAt(LocalDateTime.now());
+
+        int result = baseMapper.updateById(update);
+
+        if (result > 0) {
+            log.info("adminDeleteStory: 管理员删除成功, storyId={}", storyId);
+            // 通知作者
+            sendNotification(story.getUserId(), "system", "故事已被下架",
+                    "您的故事 \"" + story.getTitle() + "\" 因不符合社区规范已被管理员下架。");
+            return true;
+        }
+
+        return false;
     }
 
     // ==================== 私有方法 ====================

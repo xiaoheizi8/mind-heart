@@ -77,6 +77,7 @@ public class RequestContext {
                     return switch (role) {
                         case "ROLE_ADMIN" -> 3;
                         case "ROLE_COUNSELOR" -> 2;
+                        case "ROLE_PARENT" -> 5;
                         default -> 1;
                     };
                 }
@@ -112,6 +113,14 @@ public class RequestContext {
         return role == 2 || role == 3;
     }
     
+    /**
+     * @description: 检查当前用户是否是家长
+     * @return boolean 如果是家长返回true,否则返回false
+     */
+    public static boolean isParent() {
+        return getCurrentUserRole() == 5;
+    }
+
     /**
      * @description: 获取用户信息摘要，用于日志输出
      * @return String 格式: "username(userId)"

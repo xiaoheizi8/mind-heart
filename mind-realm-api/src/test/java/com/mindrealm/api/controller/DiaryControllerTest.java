@@ -5,7 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mindrealm.common.entity.User;
 import com.mindrealm.diary.entity.Diary;
 import com.mindrealm.diary.service.DiaryService;
-import com.mindrealm.warning.service.WarningService;
+import com.mindrealm.diary.service.EmotionReportService;
+import com.mindrealm.mq.producer.KafkaEventPublisher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,7 +42,10 @@ class DiaryControllerTest {
     private DiaryService diaryService;
 
     @Mock
-    private WarningService warningService;
+    private KafkaEventPublisher kafkaEventPublisher;
+
+    @Mock
+    private EmotionReportService reportService;
 
     @InjectMocks
     private DiaryController diaryController;
@@ -75,7 +79,7 @@ class DiaryControllerTest {
                 .build();
 
         when(diaryService.create(any(Diary.class))).thenReturn(diary);
-        when(warningService.analyzeRisk(anyLong(), anyString())).thenReturn(null);
+        doNothing().when(kafkaEventPublisher).publish(anyString(), anyString(), any(), any());
 
         mockMvc.perform(post("/api/v1/diary/create")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -85,7 +89,7 @@ class DiaryControllerTest {
                 .andExpect(jsonPath("$.data.id").value(1))
                 .andExpect(jsonPath("$.data.content").value("今天心情不错"));
 
-        verify(warningService).analyzeRisk(eq(1L), eq("今天心情不错"));
+        verify(kafkaEventPublisher).publish(anyString(), anyString(), any(), any());
     }
 
     @Test
@@ -118,7 +122,7 @@ class DiaryControllerTest {
                 new DiaryService.EmotionResult(0.0, "calm")
         );
         when(diaryService.update(any(Diary.class))).thenReturn(updated);
-        when(warningService.analyzeRisk(anyLong(), anyString())).thenReturn(null);
+        doNothing().when(kafkaEventPublisher).publish(anyString(), anyString(), any(), any());
 
         mockMvc.perform(put("/api/v1/diary/1")
                         .contentType(MediaType.APPLICATION_JSON)

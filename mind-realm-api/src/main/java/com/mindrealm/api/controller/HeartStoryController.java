@@ -1,8 +1,12 @@
 package com.mindrealm.api.controller;
 
 import com.mindrealm.common.context.RequestContext;
+import com.mindrealm.common.event.EventType;
 import com.mindrealm.common.result.PageResult;
 import com.mindrealm.common.result.Result;
+import com.mindrealm.mq.constant.KafkaTopics;
+import com.mindrealm.mq.event.WarningAnalyzeEvent;
+import com.mindrealm.mq.producer.KafkaEventPublisher;
 import com.mindrealm.story.model.dto.AddCommentRequest;
 import com.mindrealm.story.model.dto.AuditStoryRequest;
 import com.mindrealm.story.model.dto.PublishStoryRequest;
@@ -14,7 +18,6 @@ import com.mindrealm.story.model.vo.WarmReplyTemplateVO;
 import com.mindrealm.story.service.HeartStoryService;
 import com.mindrealm.story.service.StoryCommentService;
 import com.mindrealm.story.service.WarmReplyTemplateService;
-import com.mindrealm.warning.service.WarningService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.mindrealm.story.model.entity.StoryComment;
 import com.mindrealm.story.model.entity.WarmReplyTemplate;
@@ -40,7 +43,7 @@ public class HeartStoryController {
     private final HeartStoryService heartStoryService;
     private final StoryCommentService storyCommentService;
     private final WarmReplyTemplateService warmReplyTemplateService;
-    private final WarningService warningService;
+    private final KafkaEventPublisher kafkaEventPublisher;
 
     /**
      * 发布匿名故事
@@ -62,8 +65,19 @@ public class HeartStoryController {
         );
         
         if (storyId > 0) {
-            // 触发风险预警检测（同步关键词扫描 + Kafka异步深度分析）
-            warningService.analyzeRisk(userId, request.getContent());
+            // 通过 Kafka 异步发送风险预警分析事件
+            WarningAnalyzeEvent warningEvent = WarningAnalyzeEvent.builder()
+                    .userId(userId)
+                    .content(request.getContent())
+                    .contextType("story")
+                    .contextId(storyId)
+                    .build();
+            kafkaEventPublisher.publish(
+                    KafkaTopics.WARNING_ANALYZE,
+                    String.valueOf(userId),
+                    EventType.WARNING_ANALYZE,
+                    warningEvent
+            );
             return Result.success(storyId);
         }
         return Result.error("发布失败");

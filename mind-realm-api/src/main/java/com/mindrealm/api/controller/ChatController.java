@@ -3,10 +3,13 @@ package com.mindrealm.api.controller;
 import com.mindrealm.api.dto.response.ChatResponse;
 import com.mindrealm.api.dto.response.PersonaResponse;
 import com.mindrealm.common.context.RequestContext;
+import com.mindrealm.common.event.EventType;
 import com.mindrealm.common.result.Result;
 import com.mindrealm.common.util.ValidatorUtil;
 import com.mindrealm.core.service.AiChatService;
-import com.mindrealm.warning.service.WarningService;
+import com.mindrealm.mq.constant.KafkaTopics;
+import com.mindrealm.mq.event.WarningAnalyzeEvent;
+import com.mindrealm.mq.producer.KafkaEventPublisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,12 +40,12 @@ public class ChatController {
     private static final Map<Long, AtomicBoolean> activeRequests = new ConcurrentHashMap<>();
 
     private final AiChatService aiChatService;
-    private final WarningService warningService;
+    private final KafkaEventPublisher kafkaEventPublisher;
 
     @Autowired
-    public ChatController(AiChatService aiChatService, WarningService warningService) {
+    public ChatController(AiChatService aiChatService, KafkaEventPublisher kafkaEventPublisher) {
         this.aiChatService = aiChatService;
-        this.warningService = warningService;
+        this.kafkaEventPublisher = kafkaEventPublisher;
     }
 
     /**
@@ -69,8 +72,8 @@ public class ChatController {
             return Result.badRequest("消息不能为空");
         }
 
-        // 风险预警检测
-        warningService.analyzeRisk(userId, message);
+        // 通过 Kafka 异步发送风险预警分析事件
+        publishWarningEvent(userId, message, "chat");
 
         // AI生成回复
         String response = aiChatService.chat(userId, message, persona);
@@ -107,8 +110,8 @@ public class ChatController {
         final String finalMessage = message;
         final String finalPersona = persona;
 
-        // 风险预警检测
-        warningService.analyzeRisk(userId, message);
+        // 通过 Kafka 异步发送风险预警分析事件
+        publishWarningEvent(userId, message, "chat");
 
         // 异步AI对话
         return aiChatService.chatAsync(userId, message, persona)
@@ -185,8 +188,8 @@ public class ChatController {
         // 使用CompletableFuture异步处理,完全避免Tomcat异步分派
         return CompletableFuture.supplyAsync(() -> {
             try {
-                // 风险预警检测
-                warningService.analyzeRisk(userId, finalMessage);
+                // 通过 Kafka 异步发送风险预警分析事件
+                publishWarningEvent(userId, finalMessage, "chat");
     
                 // 发送开始事件
                 emitter.send(SseEmitter.event().name("start").data("{\"status\":\"started\"}"));
@@ -281,6 +284,23 @@ public class ChatController {
                   .replace("\n", "\\n")
                   .replace("\r", "\\r")
                   .replace("\t", "\\t");
+    }
+
+    /**
+     * 发布风险预警分析事件到 Kafka
+     */
+    private void publishWarningEvent(Long userId, String content, String contextType) {
+        WarningAnalyzeEvent event = WarningAnalyzeEvent.builder()
+                .userId(userId)
+                .content(content)
+                .contextType(contextType)
+                .build();
+        kafkaEventPublisher.publish(
+                KafkaTopics.WARNING_ANALYZE,
+                String.valueOf(userId),
+                EventType.WARNING_ANALYZE,
+                event
+        );
     }
 
     /**

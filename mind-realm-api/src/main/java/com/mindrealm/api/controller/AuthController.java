@@ -237,6 +237,49 @@ public class AuthController {
     }
 
     /**
+     * 家长注册
+     * 与普通用户注册相同，但角色设置为5(家长)
+     * @param user 注册信息
+     * @return 注册结果
+     */
+    @PostMapping("/register/parent")
+    public Result<Void> registerParent(@RequestBody User user) {
+        // 参数校验
+        if (!StringUtils.hasText(user.getUsername())) {
+            return Result.badRequest("用户名不能为空");
+        }
+        if (!StringUtils.hasText(user.getPassword())) {
+            return Result.badRequest("密码不能为空");
+        }
+        if (user.getPassword().length() < 6) {
+            return Result.badRequest("密码长度不能少于6位");
+        }
+
+        // 用户名重复检查
+        if (userService.findByUsername(user.getUsername()) != null) {
+            return Result.badRequest("用户名已存在");
+        }
+
+        // 邮箱重复检查
+        if (StringUtils.hasText(user.getEmail()) && userService.findByEmail(user.getEmail()) != null) {
+            return Result.badRequest("邮箱已注册");
+        }
+
+        // 密码MD5加密
+        user.setPassword(PasswordUtil.md5(user.getPassword()));
+        user.setStatus(1);
+        user.setRole(5);  // 家长角色
+        user.setCreatedAt(TimeUtil.now());
+
+        if (userService.register(user)) {
+            log.info("家长注册成功: {}", user.getUsername());
+            return Result.ok("注册成功");
+        }
+
+        return Result.fail("注册失败,请稍后重试");
+    }
+
+    /**
      * 发送邮箱验证码
      * 验证码存入Redis,5分钟有效
      * @param email 邮箱

@@ -86,6 +86,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             case 1 -> "USER";
             case 2 -> "COUNSELOR";
             case 3 -> "ADMIN";
+            case 5 -> "PARENT";
             default -> "USER";
         };
     }

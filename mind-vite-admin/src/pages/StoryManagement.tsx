@@ -1,21 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Modal, Descriptions, Tag, message, Space, Statistic, Row, Col, Input } from 'antd';
+import { Card, Modal, Descriptions, Tag, message, Space, Statistic, Row, Col, Input, Spin } from 'antd';
 import { EyeOutlined, CheckOutlined, CloseOutlined, DeleteOutlined } from '@ant-design/icons';
 import { storyApi } from '../api';
 import { EmotionTag, StatusTag, FilterBar, DataTable } from '../components';
 
 interface Story {
   id: number;
+  userId?: number;
   title: string;
-  content: string;
+  content?: string;
   emotionType: string;
   tags: string[];
+  coverImage?: string;
   isAnonymous: boolean;
   displayNickname: string;
   likeCount: number;
   commentCount: number;
-  viewCount: number;
+  shareCount?: number;
+  viewCount?: number;
   status: number;
+  rejectReason?: string;
+  auditorId?: number;
+  auditTime?: string;
   createdAt: string;
   publishedAt?: string;
 }
@@ -26,6 +32,7 @@ const StoryManagement: React.FC = () => {
   const [stats, setStats] = useState({ total: 0, pending: 0, approved: 0, rejected: 0 });
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
   const [detailVisible, setDetailVisible] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
   const [auditModalVisible, setAuditModalVisible] = useState(false);
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
   const [rejectReason, setRejectReason] = useState('');
@@ -34,7 +41,23 @@ const StoryManagement: React.FC = () => {
 
   useEffect(() => {
     loadData();
+    loadStats();
   }, [pagination.current, pagination.pageSize, filters.status]);
+
+  const loadStats = async () => {
+    try {
+      // Fetch counts for each status separately for stats panel
+      const [pendingRes, approvedRes, rejectedRes] = await Promise.all([
+        storyApi.getPendingList({ page: 1, size: 1, status: 0 }),
+        storyApi.getPendingList({ page: 1, size: 1, status: 1 }),
+        storyApi.getPendingList({ page: 1, size: 1, status: 2 })
+      ]);
+      const pending = (pendingRes as any)?.data?.total || 0;
+      const approved = (approvedRes as any)?.data?.total || 0;
+      const rejected = (rejectedRes as any)?.data?.total || 0;
+      setStats({ total: pending + approved + rejected, pending, approved, rejected });
+    } catch (e) { /* ignore */ }
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -47,14 +70,6 @@ const StoryManagement: React.FC = () => {
       if (res) {
         setData(res.data?.records || []);
         setPagination({ ...pagination, total: res.data?.total || 0 });
-        // 更新统计数据
-        const records = res.data?.records || [];
-        setStats({
-          total: res.data?.total || 0,
-          pending: records.filter((s: Story) => s.status === 0).length,
-          approved: records.filter((s: Story) => s.status === 1).length,
-          rejected: records.filter((s: Story) => s.status === 2).length,
-        });
       }
     } catch (error) {
       console.error('加载列表失败:', error);
@@ -74,14 +89,28 @@ const StoryManagement: React.FC = () => {
     setPagination(prev => ({ ...prev, current: 1 }));
   };
 
-  const handleView = (record: Story) => {
+  const handleView = async (record: Story) => {
     setSelectedStory(record);
     setDetailVisible(true);
+    setDetailLoading(true);
+    try {
+      const res: any = await storyApi.getById(record.id);
+      if (res?.data) {
+        setSelectedStory(res.data);
+      }
+    } catch (e) {
+      console.error('加载详情失败:', e);
+    } finally {
+      setDetailLoading(false);
+    }
   };
 
-  const handleAudit = (record: Story) => {
+  const [auditApproved, setAuditApproved] = useState(true);
+
+  const handleAudit = (record: Story, approved: boolean) => {
     setSelectedStory(record);
     setRejectReason('');
+    setAuditApproved(approved);
     setAuditModalVisible(true);
   };
 
@@ -91,11 +120,11 @@ const StoryManagement: React.FC = () => {
     try {
       const res = await storyApi.audit(selectedStory.id, {
         auditorId: 1,
-        approved: true,
-        rejectReason: rejectReason
+        approved: auditApproved,
+        rejectReason: auditApproved ? undefined : rejectReason
       });
       if (res) {
-        message.success('审核成功');
+        message.success(auditApproved ? '审核通过' : '已拒绝');
         setAuditModalVisible(false);
         loadData();
       }
@@ -146,8 +175,8 @@ const StoryManagement: React.FC = () => {
 
   const actions = [
     { key: 'view', label: '查看', icon: <EyeOutlined />, onClick: handleView },
-    { key: 'pass', label: '通过', icon: <CheckOutlined />, onClick: handleAudit, visible: (r: Story) => r.status === 0 },
-    { key: 'reject', label: '拒绝', icon: <CloseOutlined />, onClick: handleAudit, visible: (r: Story) => r.status === 0 },
+    { key: 'pass', label: '通过', icon: <CheckOutlined />, onClick: (r: Story) => handleAudit(r, true), visible: (r: Story) => r.status === 0 },
+    { key: 'reject', label: '拒绝', icon: <CloseOutlined />, onClick: (r: Story) => handleAudit(r, false), visible: (r: Story) => r.status === 0 },
     { key: 'delete', label: '删除', icon: <DeleteOutlined />, danger: true, onClick: handleDelete },
   ];
 
@@ -223,46 +252,55 @@ const StoryManagement: React.FC = () => {
         footer={null}
         width={700}
       >
-        {selectedStory && (
-          <Descriptions column={2} bordered size="small">
-            <Descriptions.Item label="ID">{selectedStory.id}</Descriptions.Item>
-            <Descriptions.Item label="情绪">
-              <EmotionTag type={selectedStory.emotionType} />
-            </Descriptions.Item>
-            <Descriptions.Item label="状态">
-              <StatusTag status={selectedStory.status} />
-            </Descriptions.Item>
-            <Descriptions.Item label="发布方式">
-              {selectedStory.isAnonymous ? '匿名' : '公开'}
-            </Descriptions.Item>
-            <Descriptions.Item label="标题" span={2}>{selectedStory.title}</Descriptions.Item>
-            <Descriptions.Item label="内容" span={2}>
-              <div style={{ whiteSpace: 'pre-wrap', maxHeight: 200, overflow: 'auto' }}>
-                {selectedStory.content}
-              </div>
-            </Descriptions.Item>
-            <Descriptions.Item label="发布者">{selectedStory.displayNickname}</Descriptions.Item>
-            <Descriptions.Item label="点赞数">{selectedStory.likeCount}</Descriptions.Item>
-            <Descriptions.Item label="评论数">{selectedStory.commentCount}</Descriptions.Item>
-            <Descriptions.Item label="浏览数">{selectedStory.viewCount}</Descriptions.Item>
-            <Descriptions.Item label="标签" span={2}>
-              {selectedStory.tags?.map((tag, i) => (
-                <Tag key={i} style={{ marginRight: 4 }}>{tag}</Tag>
-              ))}
-            </Descriptions.Item>
-            <Descriptions.Item label="发布时间">{selectedStory.createdAt}</Descriptions.Item>
-            <Descriptions.Item label="发布时间">{selectedStory.publishedAt || '-'}</Descriptions.Item>
-          </Descriptions>
-        )}
+        <Spin spinning={detailLoading}>
+          {selectedStory && (
+            <Descriptions column={2} bordered size="small">
+              <Descriptions.Item label="ID">{selectedStory.id}</Descriptions.Item>
+              <Descriptions.Item label="情绪">
+                <EmotionTag type={selectedStory.emotionType} />
+              </Descriptions.Item>
+              <Descriptions.Item label="状态">
+                <StatusTag status={selectedStory.status} />
+              </Descriptions.Item>
+              <Descriptions.Item label="发布方式">
+                {selectedStory.isAnonymous ? '匿名' : '公开'}
+              </Descriptions.Item>
+              <Descriptions.Item label="发布者ID">{selectedStory.userId || '-'}</Descriptions.Item>
+              <Descriptions.Item label="发布昵称">{selectedStory.displayNickname || '-'}</Descriptions.Item>
+              <Descriptions.Item label="标题" span={2}>{selectedStory.title}</Descriptions.Item>
+              <Descriptions.Item label="内容" span={2}>
+                <div style={{ whiteSpace: 'pre-wrap', maxHeight: 200, overflow: 'auto' }}>
+                  {selectedStory.content || '(暂未加载)'}
+                </div>
+              </Descriptions.Item>
+              <Descriptions.Item label="点赞数">{selectedStory.likeCount || 0}</Descriptions.Item>
+              <Descriptions.Item label="评论数">{selectedStory.commentCount || 0}</Descriptions.Item>
+              <Descriptions.Item label="分享数">{selectedStory.shareCount ?? '-'}</Descriptions.Item>
+              <Descriptions.Item label="浏览数">{selectedStory.viewCount ?? '-'}</Descriptions.Item>
+              <Descriptions.Item label="标签" span={2}>
+                {selectedStory.tags?.length ? selectedStory.tags.map((tag, i) => (
+                  <Tag key={i} style={{ marginRight: 4 }}>{tag}</Tag>
+                )) : '-'}
+              </Descriptions.Item>
+              <Descriptions.Item label="发布时间">{selectedStory.publishedAt || '-'}</Descriptions.Item>
+              <Descriptions.Item label="创建时间">{selectedStory.createdAt || '-'}</Descriptions.Item>
+              {selectedStory.rejectReason && (
+                <Descriptions.Item label="拒绝原因" span={2}>{selectedStory.rejectReason}</Descriptions.Item>
+              )}
+            </Descriptions>
+          )}
+        </Spin>
       </Modal>
 
       {/* 审核弹窗 */}
       <Modal
-        title="审核故事"
+        title={auditApproved ? '审核通过' : '拒绝故事'}
         open={auditModalVisible}
         onCancel={() => setAuditModalVisible(false)}
         onOk={handleAuditSubmit}
         confirmLoading={auditLoading}
+        okText={auditApproved ? '确认通过' : '确认拒绝'}
+        okButtonProps={{ danger: !auditApproved }}
         width={600}
       >
         {selectedStory && (
@@ -274,31 +312,33 @@ const StoryManagement: React.FC = () => {
               </Descriptions.Item>
               <Descriptions.Item label="发布者">{selectedStory.displayNickname}</Descriptions.Item>
             </Descriptions>
-            
+
             <div>
               <strong>内容预览:</strong>
-              <div style={{ 
+              <div style={{
                 marginTop: 8,
-                maxHeight: 200, 
-                overflow: 'auto', 
-                padding: 12, 
-                background: '#f5f5f5', 
-                borderRadius: 4 
+                maxHeight: 200,
+                overflow: 'auto',
+                padding: 12,
+                background: '#f5f5f5',
+                borderRadius: 4
               }}>
                 {selectedStory.content}
               </div>
             </div>
 
-            <div>
-              <strong>拒绝原因（可选）:</strong>
-              <Input.TextArea
-                rows={3}
-                value={rejectReason}
-                onChange={(e: any) => setRejectReason(e.target.value)}
-                placeholder="如果拒绝，请填写原因"
-                style={{ marginTop: 8 }}
-              />
-            </div>
+            {!auditApproved && (
+              <div>
+                <strong>拒绝原因（必填）:</strong>
+                <Input.TextArea
+                  rows={3}
+                  value={rejectReason}
+                  onChange={(e: any) => setRejectReason(e.target.value)}
+                  placeholder="请填写拒绝原因"
+                  style={{ marginTop: 8 }}
+                />
+              </div>
+            )}
           </Space>
         )}
       </Modal>
