@@ -1,20 +1,17 @@
 <template>
-  <text class="risk-tag" :class="levelClass">{{ label }}</text>
+  <text class="risk-tag" :class="cls" :style="{ animation: level >= 3 ? 'pulse 2s ease-in-out infinite' : 'none' }">
+    {{ icon }} {{ label }}
+  </text>
 </template>
 <script>
-const LABELS = { 1: '低风险', 2: '中风险', 3: '高风险' }
-const CLASSES = { 1: 'low', 2: 'medium', 3: 'high' }
+import { RISK_MAP } from '../utils/index.js'
 export default {
   props: { level: { type: Number, default: 1 } },
   computed: {
-    label() { return LABELS[this.level] || '--' },
-    levelClass() { return CLASSES[this.level] || 'low' }
+    info() { return RISK_MAP[this.level] || { label: '--', icon: '⚪', color: '#999' } },
+    icon() { return this.info.icon },
+    label() { return this.info.label },
+    cls() { return this.level >= 3 ? 'high' : this.level === 2 ? 'medium' : 'low' }
   }
 }
 </script>
-<style scoped>
-.risk-tag { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
-.risk-tag.high { background: #FFEBEE; color: #E53935; }
-.risk-tag.medium { background: #FFF8E1; color: #F9A825; }
-.risk-tag.low { background: #E8F5E9; color: #43A047; }
-</style>

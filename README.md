@@ -1,4 +1,4 @@
-# MindRealm - 青少年心理数字孪生系统
+# MindRealm v1.0 - 青少年心理数字孪生系统
 
 <p align="center">
   <img src="mind-vite-admin/public/favicon.svg" alt="MindRealm Logo" width="120">
@@ -9,6 +9,7 @@
 </p>
 
 <p align="center">
+  <img src="https://img.shields.io/badge/版本-v1.0.0-blue?style=for-the-badge" alt="Version">
   <a href="https://github.com/xiaoheizi8/mind-heart/stargazers">
     <img src="https://img.shields.io/github/stars/xiaoheizi8/mind-heart?style=for-the-badge" alt="Stars">
   </a>
@@ -39,7 +40,7 @@
 </p>
 
 <p align="center">
-  ⚠️ <b>本项目已开源，欢迎 Star、Fork 和贡献代码！</b>
+  🎉 <b>v1.0 正式迭代完毕！</b> 本项目已开源，欢迎 Star、Fork 和贡献代码！
 </p>
 
 ---
@@ -534,6 +535,8 @@ chore: 构建/辅助工具变动
 
 ## 开发进度
 
+### ✅ v1.0 已完成功能
+
 - [x] 用户认证模块 (登录/注册/验证码/邮箱登录)
 - [x] 日记管理模块 (CRUD/AES加密/情感分析/报告)
 - [x] 情感分析模块 (关键词+AI双策略/5维情绪分类/情绪画像)
@@ -545,7 +548,14 @@ chore: 构建/辅助工具变动
 - [x] 文件上传 (OSS集成)
 - [x] Docker部署
 - [x] 单元测试覆盖 (45+测试用例)
+
+### 📋 后续规划
+
 - [ ] 短信通知服务
+- [ ] 语音日记与语音情感分析
+- [ ] 视频微表情分析
+- [ ] 认知行为引导 (CBT)
+- [ ] 团体心理辅导
 
 ---
 

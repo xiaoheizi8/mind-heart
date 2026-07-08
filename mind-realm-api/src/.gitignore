@@ -1,0 +1,115 @@
+# Compiled class files
+*.class
+
+# Log files
+*.log
+
+# BlueJ files
+*.ctxt
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# Package Files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# Gradle
+.gradle/
+build/
+
+# IDE - IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# IDE - Eclipse
+.settings/
+.classpath
+.project
+.metadata/
+bin/
+
+# IDE - VS Code
+.vscode/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build outputs
+dist/
+build/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Sensitive files
+application-prod.yml
+application-secret.yml
+
+# 敏感配置文件(包含密码、API Key等)
+application-dev.yml
+application-prod.yml
+application-local.yml
+
+!docs/
+
+# 数据库脚本和文档(不公开)
+database/
+docs/
+
+# 日志文件
+logs/
+*.log
+
+# 上传文件
+uploads/
+
+# Python脚本(内部工具)
+py/
+
+# 测试代码
+test.c
+8051_interrupt.c
+
+# 临时文件
+crushes/
+
+# IDEA
+.idea/
+
+# VSCode
+.vscode/

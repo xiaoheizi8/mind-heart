@@ -72,7 +72,13 @@ export const parentApi = {
   getChildEmotionReport: (childId, days) => request.get(`/api/v1/parent/child/${childId}/emotion-report`, { days }),
   sendBindRequest: (childIdentifier) => request.post('/api/v1/parent/bind', { childIdentifier }),
   getBindRequests: () => request.get('/api/v1/parent/bind/requests'),
-  cancelBind: (id) => request.delete(`/api/v1/parent/bind/${id}`)
+  cancelBind: (id) => request.delete(`/api/v1/parent/bind/${id}`),
+  // 新增
+  generateReport: (childId, type = 'week') => request.post(`/api/v1/parent/child/${childId}/reports/generate?type=${type}`),
+  handleWarning: (childId, warningId) => request.post(`/api/v1/parent/child/${childId}/warnings/${warningId}/handle`),
+  getEmotionTrend: (childId, days = 7) => request.get(`/api/v1/parent/child/${childId}/emotion-trend`, { days }),
+  getActivitySummary: (childId) => request.get(`/api/v1/parent/child/${childId}/activity-summary`),
+  getDashboard: () => request.get('/api/v1/parent/dashboard')
 }
 
 // User API (uses /api/v1/user)

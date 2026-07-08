@@ -3,16 +3,14 @@
     <text class="empty-icon">{{ icon || '📭' }}</text>
     <text class="empty-text">{{ text || '暂无数据' }}</text>
     <text class="empty-desc" v-if="desc">{{ desc }}</text>
+    <slot name="action">
+      <button v-if="actionText" class="btn btn-primary btn-sm mt-24" @click="$emit('action')">{{ actionText }}</button>
+    </slot>
   </view>
 </template>
 <script>
 export default {
-  props: { icon: String, text: String, desc: String }
+  props: { icon: String, text: String, desc: String, actionText: String },
+  emits: ['action']
 }
 </script>
-<style scoped>
-.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 40px; }
-.empty-icon { font-size: 48px; margin-bottom: 16px; }
-.empty-text { font-size: 16px; color: var(--text-secondary); margin-bottom: 8px; }
-.empty-desc { font-size: 13px; color: var(--text-hint); text-align: center; }
-</style>

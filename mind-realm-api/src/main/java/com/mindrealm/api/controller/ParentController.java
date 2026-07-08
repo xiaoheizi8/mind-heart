@@ -328,4 +328,135 @@ public class ParentController {
 
         return Result.success(report);
     }
+
+    // ==================== 新增: 报告生成 & 预警处理 & 聚合数据 ====================
+
+    /**
+     * 生成孩子的情绪报告
+     */
+    @PostMapping("/child/{childId}/reports/generate")
+    public Result<EmotionReport> generateReport(
+            @PathVariable Long childId,
+            @RequestParam(defaultValue = "week") String type) {
+        Long parentId = RequestContext.getCurrentUserId();
+        if (parentId == null) return Result.unauthorized();
+        if (!bindingService.isBound(parentId, childId)) {
+            return Result.forbidden("未绑定该孩子");
+        }
+        EmotionReport report = reportService.generateAndSaveReport(childId, type);
+        return Result.success(report);
+    }
+
+    /**
+     * 标记预警为已处理
+     */
+    @PostMapping("/child/{childId}/warnings/{warningId}/handle")
+    public Result<Void> handleWarning(
+            @PathVariable Long childId, @PathVariable Long warningId) {
+        Long parentId = RequestContext.getCurrentUserId();
+        if (parentId == null) return Result.unauthorized();
+        if (!bindingService.isBound(parentId, childId)) {
+            return Result.forbidden("未绑定该孩子");
+        }
+        warningService.handleWarning(warningId, parentId, "家长已处理");
+        return Result.ok("处理成功");
+    }
+
+    /**
+     * 孩子情绪趋势数据（日级别，用于折线图）
+     */
+    @GetMapping("/child/{childId}/emotion-trend")
+    public Result<List<Map<String, Object>>> getEmotionTrend(
+            @PathVariable Long childId,
+            @RequestParam(defaultValue = "7") Integer days) {
+        Long parentId = RequestContext.getCurrentUserId();
+        if (parentId == null) return Result.unauthorized();
+        if (!bindingService.isBound(parentId, childId)) {
+            return Result.forbidden("未绑定该孩子");
+        }
+
+        List<Diary> diaries = diaryService.getRecentByUser(childId, days);
+        List<Map<String, Object>> trend = new ArrayList<>();
+        for (Diary diary : diaries) {
+            Map<String, Object> point = new HashMap<>();
+            point.put("date", diary.getCreatedAt());
+            point.put("score", diary.getEmotionScore());
+            point.put("category", diary.getEmotionCategory());
+            point.put("content", diary.getContent() != null && diary.getContent().length() > 30
+                    ? diary.getContent().substring(0, 30) + "..." : diary.getContent());
+            trend.add(point);
+        }
+        return Result.success(trend);
+    }
+
+    /**
+     * 孩子活动摘要（连续天数、统计等）
+     */
+    @GetMapping("/child/{childId}/activity-summary")
+    public Result<Map<String, Object>> getActivitySummary(@PathVariable Long childId) {
+        Long parentId = RequestContext.getCurrentUserId();
+        if (parentId == null) return Result.unauthorized();
+        if (!bindingService.isBound(parentId, childId)) {
+            return Result.forbidden("未绑定该孩子");
+        }
+
+        List<Diary> recent = diaryService.getRecentByUser(childId, 30);
+        Map<String, Object> summary = new HashMap<>();
+        summary.put("totalDiaries", recent.size());
+
+        // 计算连续天数
+        int streak = 0;
+        for (Diary d : recent) {
+            if (d.getCreatedAt() != null) { streak++; } else { break; }
+        }
+        summary.put("streak", streak);
+        summary.put("lastDiaryDate", recent.isEmpty() ? null : recent.get(0).getCreatedAt());
+
+        return Result.success(summary);
+    }
+
+    /**
+     * 家长首页仪表盘（所有孩子聚合数据）
+     */
+    @GetMapping("/dashboard")
+    public Result<Map<String, Object>> getDashboard() {
+        Long parentId = RequestContext.getCurrentUserId();
+        if (parentId == null) return Result.unauthorized();
+
+        List<User> children = bindingService.getBoundChildren(parentId);
+        int totalChildren = children.size();
+        int alertCount = 0;
+        List<Map<String, Object>> childSummaries = new ArrayList<>();
+
+        for (User child : children) {
+            Map<String, Object> summary = new HashMap<>();
+            summary.put("id", child.getId());
+            summary.put("nickname", child.getNickname());
+            summary.put("username", child.getUsername());
+
+            List<Diary> diaries = diaryService.getRecentByUser(child.getId(), 7);
+            if (!diaries.isEmpty()) {
+                summary.put("latestEmotion", diaries.get(0).getEmotionCategory());
+                summary.put("latestEmotionScore", diaries.get(0).getEmotionScore());
+            }
+
+            Page<WarningRecord> warnings = warningService.getUserWarnings(child.getId(), 1, 3);
+            boolean hasAlert = warnings.getRecords().stream()
+                    .anyMatch(w -> w.getRiskLevel() != null && w.getRiskLevel() >= 3 && w.getHandled() == 0);
+            if (hasAlert) alertCount++;
+            summary.put("hasAlert", hasAlert);
+
+            // 最后活跃时间
+            if (!diaries.isEmpty()) {
+                summary.put("lastDiaryDate", diaries.get(0).getCreatedAt());
+            }
+            childSummaries.add(summary);
+        }
+
+        Map<String, Object> dashboard = new HashMap<>();
+        dashboard.put("totalChildren", totalChildren);
+        dashboard.put("alertCount", alertCount);
+        dashboard.put("children", childSummaries);
+        return Result.success(dashboard);
+    }
 }

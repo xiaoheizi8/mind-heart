@@ -1,21 +1,23 @@
 <template>
-  <view class="page-container flex-center" style="flex-direction:column;">
-    <view class="login-card">
-      <text class="login-title">心域家长版</text>
-      <text class="login-subtitle">登录以查看孩子动态</text>
-      <input class="input" v-model="username" placeholder="用户名/手机号/邮箱" />
-      <input class="input" v-model="password" type="password" placeholder="密码" />
-      <button class="btn btn-primary login-btn" @click="doLogin" :disabled="loading">{{ loading ? '登录中...' : '登 录' }}</button>
-      <view class="login-links">
-        <text class="link" @click="goRegister">注册家长账号</text>
-      </view>
+  <view class="launch-page flex-center" style="flex-direction:column;">
+    <view class="login-card animate-fade-in">
+      <view class="login-logo">🏠</view>
+      <text class="login-title">欢迎回来</text>
+      <text class="login-subtitle">登录查看孩子的情绪动态</text>
+      <view class="input-group"><input class="input" v-model="username" placeholder="用户名/手机号/邮箱" /></view>
+      <view class="input-group"><view class="input-wrap"><input class="input" :type="showPwd ? 'text' : 'password'" v-model="password" placeholder="密码" /><text class="input-icon" @click="showPwd=!showPwd">{{ showPwd ? '🙈' : '👁️' }}</text></view></view>
+      <button class="btn btn-primary btn-block mt-16" @click="doLogin" :disabled="loading">
+        <text v-if="!loading">登 录</text>
+        <text v-else>登录中...</text>
+      </button>
+      <view class="login-footer"><text class="link" @click="goRegister">注册家长账号</text></view>
     </view>
   </view>
 </template>
 <script>
 import { authApi } from '../../utils/request.js'
 export default {
-  data() { return { username: '', password: '', loading: false } },
+  data() { return { username: '', password: '', showPwd: false, loading: false } },
   methods: {
     async doLogin() {
       if (!this.username || !this.password) { uni.showToast({ title: '请填写完整', icon: 'none' }); return }
@@ -25,20 +27,18 @@ export default {
         uni.setStorageSync('token', res.token)
         uni.setStorageSync('userInfo', res.userInfo || res)
         uni.switchTab({ url: '/pages/index/index' })
-      } catch (e) {
-        uni.showToast({ title: e.message || '登录失败', icon: 'none' })
-      } finally { this.loading = false }
+      } catch (e) { uni.showToast({ title: e.message || '登录失败', icon: 'none' }) }
+      finally { this.loading = false }
     },
     goRegister() { uni.navigateTo({ url: '/pages/register/register' }) }
   }
 }
 </script>
 <style scoped>
-.login-card { width: 85%; max-width: 360px; background: #fff; border-radius: 16px; padding: 40px 30px; box-shadow: var(--shadow); }
-.login-title { font-size: 24px; font-weight: bold; color: var(--primary-color); text-align: center; display: block; margin-bottom: 8px; }
-.login-subtitle { font-size: 14px; color: var(--text-hint); text-align: center; display: block; margin-bottom: 30px; }
-.input { width: 100%; height: 46px; border: 1px solid var(--border-color); border-radius: 8px; padding: 0 14px; font-size: 15px; margin-bottom: 16px; }
-.login-btn { width: 100%; height: 46px; margin-top: 8px; }
-.login-links { margin-top: 20px; text-align: center; }
-.link { font-size: 14px; color: var(--primary-color); }
+.login-card { width: 85%; max-width: 640rpx; background: #fff; border-radius: var(--radius-xl); padding: 56rpx 40rpx; box-shadow: var(--shadow-medium); }
+.login-logo { width: 96rpx; height: 96rpx; background: linear-gradient(135deg, var(--primary-color), var(--primary-light)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 44rpx; margin: 0 auto 20rpx; }
+.login-title { font-size: var(--font-2xl); font-weight: bold; color: var(--text-primary); text-align: center; display: block; }
+.login-subtitle { font-size: var(--font-sm); color: var(--text-tertiary); text-align: center; display: block; margin: 8rpx 0 40rpx; }
+.login-footer { margin-top: 32rpx; text-align: center; }
+.link { font-size: var(--font-base); color: var(--primary-color); }
 </style>
